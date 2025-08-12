@@ -67,7 +67,10 @@ void heap_example() {
     buffer = NULL;  // Prevent use-after-free
 }
 ```
-
+---
+**Note** 
+Static memory is memory that is allocated at complile time. For example if we have static int x = 10; this is stores at compile time and persists through the programs lifetime. Stack memory is memory that is allocated during runtime and its duration is lasts until the function is returned. These are all local variables and when these variables only exist during the duration of the function. Heap memory is all dynamic memory. This memory needs to be managed using malloc and free to handle managment. 
+---
 ## 🏗️ Stack vs Heap
 
 ### Stack Characteristics
@@ -168,32 +171,33 @@ void* aligned_malloc(size_t size, size_t alignment) {
 ### Memory Pool Implementation
 ```c
 typedef struct {
-    uint8_t* pool;
-    size_t pool_size;
-    size_t block_size;
-    uint8_t* free_list;
-    size_t free_count;
+    uint8_t* pool; //address to the start of the memory pool block
+    size_t pool_size; //size of the pool block in bytes
+    size_t block_size; //size of each block in pool
+    uint8_t* free_list; // pointer to first free block in memory
+    size_t free_count; // number of free block in memory
 } mem_pool_t;
 
 // Initialize memory pool
 int mem_pool_init(mem_pool_t* pool, size_t block_size, size_t block_count) {
-    pool->block_size = block_size;
-    pool->pool_size = block_size * block_count;
-    pool->pool = malloc(pool->pool_size);
+    // the pointer to mem_pool_t struct is given as a parameter
+    pool->block_size = block_size; // pool pointer to mem_pool_t. use arrow operator to access member in struct and set it to block_size param
+    pool->pool_size = block_size * block_count; // same with pool_size
+    pool->pool = malloc(pool->pool_size); // we then allocate memory for the pool pointer within the pool struct 
     
     if (pool->pool == NULL) {
         return -1;
     }
     
     // Initialize free list
-    pool->free_list = pool->pool;
+    pool->free_list = pool->pool; //Here we set the pointer of the start of the pool memeory to free_list 
     pool->free_count = block_count;
     
     // Link blocks in free list
-    uint8_t* current = pool->pool;
+    uint8_t* current = pool->pool; //set a pointer current variables and set it to the pool pointer in pool struct. 
     for (size_t i = 0; i < block_count - 1; i++) {
-        *(uint8_t**)current = current + block_size;
-        current += block_size;
+        *(uint8_t**)current = current + block_size; //we then cast a double pointer to current variable and derefernce it to set value of pointer to the next block in memory. 
+        current += block_size; // we then increment the address of the current pointer up by the size of the block
     }
     *(uint8_t**)current = NULL;
     
@@ -206,11 +210,11 @@ void* mem_pool_alloc(mem_pool_t* pool) {
         return NULL;  // Pool exhausted
     }
     
-    uint8_t* block = pool->free_list;
-    pool->free_list = *(uint8_t**)block;
-    pool->free_count--;
+    uint8_t* block = pool->free_list; //set a block pointer to the first free block in memory to return later
+    pool->free_list = *(uint8_t**)block; // we read the next block pointer stores in block one. So we are just dereferencing the pointer to block 2 that is stores in the first block
+    pool->free_count--;//decrement the count of number of fre block
     
-    return block;
+    return block; 
 }
 
 // Free to pool
@@ -223,7 +227,10 @@ void mem_pool_free(mem_pool_t* pool, void* ptr) {
     pool->free_count++;
 }
 ```
-
+---
+**Note**
+so when making a memory pool we first create our struct so the memory pool struct. We then initialzie the memory pool, we set teh block size and pool size as well as allocate memory for the pool in memory. We then initialze the free list. Then link the block in the free list together so we get a linked list where each block in memory hold the address to the next block in memory. We then have function to allocate from the pool where we take the head of the pool and remove it from the list and set the new head to block 2. As well as free to pool where we take the pointer we wish to return and set it the be the head of the free list. so block 1 is now the head. 
+---
 ## 🗑️ Memory Deallocation
 
 ### Safe Deallocation Patterns
@@ -245,7 +252,20 @@ void cleanup_example() {
     // buffer is now NULL
 }
 ```
-
+---
+**Note**
+We have a deallocation function and since in c things are pass by value if we were to use just a single pointer as a param we would not be changing the actual value of the pointer just a copy of it since free() take a void*
+ptr param. So if we just had
+```c
+void free_function(void* ptr){
+    if(ptr != NULL){
+        free(ptr);
+        ptr = NULL;
+    }
+}
+```
+This would only change the copy of the ptr locally. So we would have to use a pointer to pointer so that we can pass the pointer by reference to the free function to free the function on the heap not just a local copy. 
+---
 ### Memory Leak Prevention
 ```c
 // Track allocations in debug builds
@@ -296,7 +316,49 @@ void safe_strcpy(char* dest, const char* src, size_t dest_size) {
 
 // Usage
 void safe_array_example() {
-    uint8_t buffer[64];
+    uint8_t buffer[64];#include <stdint.h>
+
+//GPIO struct
+typedef struct{
+	volatile uint32_t MODER;
+	volatile uint32_t OTYPER;
+	volatile uint32_t OSPEEDR;
+	volatile uint32_t PUPDR;
+	volatile uint32_t IDR;
+	volatile uint32_t ODR;
+	volatile uint32_t BSRR;
+	volatile uint32_t LCKR;
+	volatile uint32_t AFRL;
+	volatile uint32_t AFRH;
+}GPIO_TypeDef;
+
+typedef struct{
+	volatile uint32_t PADDING[12];
+	volatile uint32_t AHB1ENR;
+
+}RCC_TypeDef;
+
+
+#define GPIOA_BASE 0x40020C00
+#define RCC_BASE 0x40023800
+#define GPIOA ((GPIO_TypeDef*)GPIOA_BASE)
+#define RCC ((RCC_TypeDef*)RCC_BASE)
+#define GPIOEN (1U<<3)
+#define PIN5 (1U<<12)
+#define LED_PIN PIN5 
+
+int main(void){
+	RCC->AHB1ENR |= GPIOEN;
+	GPIOA->MODER |= (1<<25);
+	GPIOA->MODER &= ~(1<<24);
+
+	while(1){
+		GPIO->ODR ^= LED_PIN;
+	}
+
+
+}
+
     uint8_t* element = SAFE_ARRAY_ACCESS(buffer, 32, 64);
     if (element != NULL) {
         *element = 42;

@@ -20,6 +20,40 @@
 
 ## 🎯 Overview
 
+### Concept: Addresses, objects, and aliasing
+
+A pointer is just an address; correctness depends on the lifetime and effective type of the object it points to. Hardware access requires `volatile`; high-performance memory access benefits from no-aliasing assumptions.
+
+### Minimal example
+```c
+extern uint32_t sensor_value;
+void update(volatile uint32_t* reg, uint32_t v){ *reg = v; }
+
+// Aliasing pitfall: compiler may assume *a and *b don't alias unless told
+void add_buffers(uint16_t* restrict a, const uint16_t* restrict b, size_t n){
+  for(size_t i=0;i<n;i++) a[i]+=b[i];
+}
+```
+
+### Takeaways
+- Use `volatile` for memory-mapped registers and ISR-shared flags.
+- Be mindful of strict aliasing; stick to the same effective type or `memcpy`.
+- Prefer `restrict` only when you can prove non-aliasing.
+
+---
+
+## 🧪 Guided Labs
+- Array decay: print `sizeof` in caller vs callee; confirm pointer vs array.
+- Strict aliasing trap: write via `uint8_t*` and read via `uint32_t*`; compare -O0 vs -O2.
+
+## ✅ Check Yourself
+- When is casting away `const` legal/illegal?
+- How do you model a register block safely with pointers and `volatile`?
+
+## 🔗 Cross-links
+- `Embedded_C/Type_Qualifiers.md`
+- `Embedded_C/Memory_Mapped_IO.md`
+
 Pointers are fundamental to embedded programming, enabling direct memory access, hardware register manipulation, and efficient data structures. Understanding pointers is crucial for low-level programming and hardware interaction.
 
 ### Key Concepts for Embedded Development
@@ -103,7 +137,8 @@ int value = *ptr;    // Dereference: get value 0x42 from address 0x1000
 **Hardware Register Access:**
 ```c
 // Access GPIO registers
-volatile uint32_t* const GPIOA_ODR = (uint32_t*)0x40020014;
+// Use 'volatile' on memory-mapped registers so reads/writes are not optimized away
+volatile uint32_t* const GPIOA_ODR = (volatile uint32_t*)0x40020014;
 *GPIOA_ODR |= (1 << 5);  // Set bit 5
 ```
 
@@ -175,10 +210,11 @@ Memory Hierarchy:
 - Required for DMA operations
 
 **Virtual Addresses:**
-- Addresses used by software
+- Addresses used by software on hosted/OS systems with an MMU
 - Translated to physical addresses by MMU
 - Provide memory protection and isolation
-- Enable memory paging and swapping
+- Enable paging and advanced protection
+- Many microcontrollers (e.g., ARM Cortex‑M) lack an MMU; they use physical addresses only
 
 **Memory-Mapped Addresses:**
 - Addresses that map to hardware registers

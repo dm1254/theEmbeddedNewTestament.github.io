@@ -25,6 +25,10 @@
 
 External interrupts allow embedded systems to respond immediately to external events without polling. They are essential for real-time applications, user interfaces, and efficient system design.
 
+### Concept: Edges vs levels, and clearing the source
+
+Choose edges to capture transitions; levels to detect sustained conditions. Always clear the source appropriately and consider masking during long handlers.
+
 ### **Key Concepts**
 - **Interrupt Vector Table** - Maps interrupt sources to handler functions
 - **Interrupt Priority** - Determines which interrupt takes precedence
@@ -77,7 +81,7 @@ typedef struct {
 ## ⚡ **Edge vs Level Triggered**
 
 ### **Edge-Triggered Advantages**
-- **No missed events** - Each transition is captured
+- **Event-based** - Captures transitions without level polling
 - **Lower power consumption** - Interrupt clears automatically
 - **Better for high-frequency signals** - No continuous triggering
 
@@ -90,9 +94,9 @@ typedef struct {
 - **Good for slow signals** - No missed events during processing
 
 ### **Level-Triggered Disadvantages**
-- **Continuous triggering** - Must clear interrupt manually
-- **Higher power consumption** - Interrupt remains active
-- **Can miss events** - If level changes during processing
+- **Continuous triggering** - Must clear source and/or mask interrupt
+- **Higher power consumption** - Interrupt remains active until cleared
+- **May require masking** - To avoid re-entry during long handlers
 
 ---
 
@@ -113,14 +117,18 @@ void configure_external_interrupt(uint8_t pin, edge_type_t edge) {
     // Set as input
     port->MODER &= ~(3 << (pin_num * 2));
     
-    // Enable pull-up resistor
+    // Configure pull resistors per board design (pull-up OR pull-down)
     port->PUPDR &= ~(3 << (pin_num * 2));
-    port->PUPDR |= (1 << (pin_num * 2));
+    if (edge == FALLING_EDGE) {
+        port->PUPDR |= (1 << (pin_num * 2)); // pull-up
+    } else if (edge == RISING_EDGE) {
+        port->PUPDR |= (2 << (pin_num * 2)); // pull-down
+    }
     
     // Configure interrupt trigger
     configure_interrupt_trigger(pin, edge);
     
-    // Enable interrupt in NVIC
+    // Enable interrupt in NVIC with appropriate priority
     enable_nvic_interrupt(EXTI_IRQn);
 }
 ```
@@ -724,6 +732,23 @@ void process_interrupts(void) {
        }
    }
    ```
+
+---
+
+## 🧪 Guided Labs
+1) Debouncing comparison
+- Implement software debouncing vs hardware RC filter; measure response time and reliability.
+
+2) Edge vs level triggering
+- Configure the same pin for both edge and level interrupts; observe behavior differences.
+
+## ✅ Check Yourself
+- When should you use level-triggered interrupts instead of edge-triggered?
+- How do you handle multiple interrupt sources on the same pin?
+
+## 🔗 Cross-links
+- `Hardware_Fundamentals/Interrupts_Exceptions.md` for interrupt handling
+- `Hardware_Fundamentals/Digital_IO_Programming.md` for pin configuration
 
 ---
 

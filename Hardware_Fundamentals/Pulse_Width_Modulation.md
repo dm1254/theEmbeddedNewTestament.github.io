@@ -22,6 +22,43 @@
 
 ## 🎯 Overview
 
+### Concept: Duty, frequency, and resolution are coupled
+
+PWM is timer compare hardware. Your choice of period (ARR) and clock prescaler sets frequency and duty resolution. Match these to actuator needs and EMC constraints.
+
+### Minimal example
+```c
+// Set PWM to 20 kHz with 10-bit resolution if clock allows
+void pwm_init(void){ /* set PSC/ARR; configure CCx mode; enable output */ }
+void pwm_set_duty(uint16_t duty){ /* write CCRx, clamp to ARR */ }
+```
+
+### Try it
+1. Sweep frequency to move switching noise out of sensitive bands.
+2. Evaluate linearity vs dead-time/driver delays on motors/LEDs.
+
+### Takeaways
+- Frequency vs resolution tradeoff is dictated by timer clock.
+- Use complementary outputs and dead-time for half-bridges.
+- Filtered PWM (RC) behaves like a DAC; design the filter.
+
+---
+
+## 🧪 Guided Labs
+1) Resolution vs frequency trade-off
+- Generate PWM at different frequencies; measure actual resolution with an oscilloscope.
+
+2) Filtered PWM as DAC
+- Apply RC filter to PWM output; measure ripple and settling time.
+
+## ✅ Check Yourself
+- How does PWM frequency affect motor efficiency and audible noise?
+- When should you use center-aligned vs edge-aligned PWM?
+
+## 🔗 Cross-links
+- `Hardware_Fundamentals/Timer_Counter_Programming.md` for timer configuration
+- `Hardware_Fundamentals/Analog_IO.md` for DAC alternatives
+
 Pulse Width Modulation (PWM) is a technique used to control power delivery to electrical devices by rapidly switching between on and off states. It's widely used in motor control, LED dimming, power supplies, and audio applications.
 
 **Key Concepts:**

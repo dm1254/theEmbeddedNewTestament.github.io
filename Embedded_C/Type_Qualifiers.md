@@ -20,6 +20,81 @@
 
 ## 🎯 **Overview**
 
+### Concept: Tell the compiler the truth about how data changes
+
+Think of qualifiers as contracts:
+- `const`: intent is read-only at this access point
+- `volatile`: value may change outside the compiler’s view (hardware/ISR)
+- `restrict`: this pointer is the only way to access the referenced object
+
+### Why it matters in embedded
+- Correct `volatile` prevents the compiler from caching HW register values.
+- `const` enables placement in ROM and better optimization.
+- `restrict` allows the compiler to vectorize/memcpy efficiently in hot paths.
+
+### Minimal examples
+```c
+// Read-only lookup table likely in Flash
+static const uint16_t lut[] = {1,2,3,4};
+
+// Memory-mapped I/O register
+#define GPIOA_ODR (*(volatile uint32_t*)0x40020014u)
+
+// Non-aliasing buffers (improves copy performance)
+void copy_fast(uint8_t * restrict dst, const uint8_t * restrict src, size_t n);
+```
+
+### Try it
+1. Remove `volatile` from a polled status register read and compile with `-O2`; inspect assembly to see hoisted loads.
+2. Add/Remove `restrict` on a memset/memcpy-like loop and measure on target.
+
+### Takeaways
+- `volatile` is about visibility, not atomicity or ordering.
+- `const` expresses intent and may change placement; don’t cast it away to write.
+- Use `restrict` only when you can prove no aliasing.
+
+> Platform note: For I/O ordering on some MCUs/SoCs, pair volatile accesses with memory barriers when required by the architecture.
+
+---
+
+## 🧪 Guided Labs
+
+1) Volatile visibility lab
+```c
+// Configure an ISR to toggle a flag; poll in main with and without volatile
+static /*volatile*/ uint32_t flag = 0;
+void ISR(void){ flag++; }
+int main(void){
+  uint32_t last = 0;
+  for(;;){ if(flag != last){ last = flag; heartbeat(); } }
+}
+```
+- Build with -O2; observe missed updates without `volatile`.
+
+2) ROM placement lab
+```c
+static /*const*/ uint16_t lut[1024] = { /* ... */ };
+```
+- Toggle `const`; inspect the map for `.rodata` vs `.data` and boot copy size.
+
+3) Restrict speedup lab
+```c
+void add(uint32_t* /*restrict*/ a, const uint32_t* /*restrict*/ b, size_t n){
+  for(size_t i=0;i<n;i++) a[i]+=b[i];
+}
+```
+- Time with overlapping vs non-overlapping buffers; evaluate benefit and safety.
+
+## ✅ Check Yourself
+- When do you need memory barriers in addition to `volatile`?
+- Can `const` objects ever be modified through another alias legally?
+- Under what conditions is using `restrict` undefined or unsafe?
+
+## 🔗 Cross-links
+- `Embedded_C/Memory_Mapped_IO.md` for register patterns
+- `Embedded_C/Compiler_Intrinsics.md` for barriers
+- `Embedded_C/Memory_Models.md` for placement and startup costs
+
 Type qualifiers in C provide important hints to the compiler about how variables should be treated:
 - **const** - Indicates read-only data
 - **volatile** - Indicates data that can change unexpectedly

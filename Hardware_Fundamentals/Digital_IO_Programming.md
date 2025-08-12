@@ -27,6 +27,50 @@
 
 ## 🎯 Overview
 
+### Concept: Deterministic I/O with clear ownership of pins and timing
+
+Digital I/O is about configuring pin direction, level, and timing deterministically. Treat each pin as a resource with explicit ownership and transitions.
+
+### Why it matters in embedded
+- Prevents contention (two drivers on one net) and undefined levels.
+- Ensures edges meet external device timing (setup/hold, debounce).
+- Makes behavior predictable under interrupts and RTOS scheduling.
+
+### Minimal example
+```c
+// Simple LED toggle with explicit initialization
+static inline void led_init(void){ /* configure GPIO port/pin mode */ }
+static inline void led_on(void){ /* set ODR bit */ }
+static inline void led_off(void){ /* clear ODR bit */ }
+static inline void led_toggle(void){ /* XOR ODR bit */ }
+```
+
+### Try it
+1. Toggle a pin at a known period; measure with a logic analyzer to verify jitter.
+2. Add an ISR and observe jitter change; adjust priority or move work out of ISR.
+
+### Takeaways
+- Initialize before use; document pull-ups/downs and default state.
+- Avoid read-modify-write races by using atomic set/reset registers when available.
+- Encapsulate pin control behind functions/macros for portability.
+
+---
+
+## 🧪 Guided Labs
+1) Jitter measurement
+- Toggle a pin in a tight loop; measure edge-to-edge timing with an oscilloscope or logic analyzer.
+
+2) RMW race avoidance
+- Implement a function that sets/clears individual bits without affecting others; verify atomicity.
+
+## ✅ Check Yourself
+- When do you need to disable interrupts during I/O operations?
+- How can you ensure consistent timing across different optimization levels?
+
+## 🔗 Cross-links
+- `Embedded_C/Type_Qualifiers.md` for volatile usage
+- `Embedded_C/Bit_Manipulation.md` for bit operations
+
 Digital I/O programming is the foundation of embedded system interaction with the physical world. It involves reading digital inputs (switches, sensors) and controlling digital outputs (LEDs, relays, displays).
 
 **Key Concepts:**

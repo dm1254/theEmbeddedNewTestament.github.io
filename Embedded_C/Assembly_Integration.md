@@ -22,6 +22,46 @@
 
 ## 🎯 **Overview**
 
+### Concept: Use assembly only where C cannot clearly express intent
+
+Reach for inline/standalone assembly when you need exact instructions, special registers, or calling conventions C cannot provide. Keep interfaces small, stable, and documented.
+
+### Why it matters in embedded
+- Overuse harms portability and can pessimize the optimizer.
+- Clear boundaries simplify review and maintenance.
+- Correct clobbers/constraints prevent subtle bugs.
+
+### Minimal example: small leaf routine
+```c
+// C wrapper with tiny asm core (example, ARM)
+static inline uint32_t rbit32(uint32_t v){
+  uint32_t out; __asm volatile ("rbit %0, %1" : "=r"(out) : "r"(v)); return out;
+}
+```
+
+### Try it
+1. Compare compiler output for a C bit-reverse vs `rbit` intrinsic/asm.
+2. Validate clobber lists by enabling warnings and inspecting disassembly.
+
+### Takeaways
+- Write assembly last, measure first.
+- Keep ABI boundaries clear; document register usage and side effects.
+- Prefer intrinsics when available—they’re easier to port and read.
+
+---
+
+## 🧪 Guided Labs
+- Replace a tight loop in C with an intrinsic and then with inline asm; compare speed and size.
+- Break an inline asm block by omitting a clobber; observe miscompilation and fix.
+
+## ✅ Check Yourself
+- How do you ensure your inline asm doesn’t block reordering that improves performance?
+- When is a separate `.S` file preferable to inline asm?
+
+## 🔗 Cross-links
+- `Embedded_C/Compiler_Intrinsics.md`
+- `Embedded_C/Type_Qualifiers.md` (for `volatile` interactions)
+
 Assembly integration is essential in embedded systems for:
 - **Direct hardware control** - Access to specific CPU instructions
 - **Performance optimization** - Hand-tuned critical code sections
@@ -133,6 +173,7 @@ void process_data(uint32_t* data, size_t size) {
 ```c
 // C implementation - compiler optimized
 uint32_t multiply_by_16_c(uint32_t value) {
+    // Modern compilers typically strength-reduce this to a shift automatically.
     return value * 16;
 }
 
@@ -147,24 +188,25 @@ uint32_t multiply_by_16_asm(uint32_t value) {
     return result;
 }
 
-// Performance comparison:
-// C: May use multiply instruction (slower)
-// Assembly: Uses shift instruction (faster)
+// Note: Compilers usually generate a shift for multiply-by-constant; hand-written
+// asm is rarely faster for simple cases and may hinder optimization and portability.
 ```
 
 **Hardware Access:**
 ```c
 // Direct hardware register access
+// Guard ARM-specific inline assembly to avoid build errors on other targets
+#if defined(__arm__) || defined(__aarch64__)
 void enable_interrupts_asm(void) {
     __asm volatile (
-        "cpsie i\n"  // Enable interrupts
+        "cpsie i\n"
         : : : "memory"
     );
 }
 
 void disable_interrupts_asm(void) {
     __asm volatile (
-        "cpsid i\n"  // Disable interrupts
+        "cpsid i\n"
         : : : "memory"
     );
 }
@@ -172,15 +214,16 @@ void disable_interrupts_asm(void) {
 // Memory barrier for multi-core systems
 void memory_barrier_asm(void) {
     __asm volatile (
-        "dmb 0xF\n"  // Data memory barrier
+        "dmb 0xF\n"
         : : : "memory"
     );
 }
+#endif
 ```
 
 **Interrupt Handling:**
 ```c
-// Fast interrupt service routine
+// Example interrupt service routine attribute is compiler/target-specific
 void __attribute__((interrupt)) fast_isr(void) {
     // Assembly for fast interrupt handling
     __asm volatile (

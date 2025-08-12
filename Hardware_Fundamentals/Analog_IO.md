@@ -37,6 +37,48 @@ Analog I/O is essential for interfacing with real-world signals like temperature
 
 ## 🤔 What is Analog I/O?
 
+### Concept: Sample and actuate with signal integrity
+
+ADC/DAC performance depends on reference stability, input impedance, sampling time, and layout. Treat the analog front end as part of your software’s timing contract.
+
+### Why it matters in embedded
+- Wrong sampling time or source impedance skews measurements.
+- Reference noise and grounding dominate effective resolution.
+- PWM+filter DACs need bandwidth/settling analysis like real DACs.
+
+### Minimal example
+```c
+// Pseudo-code: configure ADC sample time to match source impedance
+// t_sample >= k * R_source * C_sample; consult datasheet constants
+void adc_config(uint32_t sample_cycles) { /* set SMPRx fields */ }
+```
+
+### Try it
+1. Sweep sample time and measure a high-impedance source error vs a buffer driver.
+2. Capture multiple samples; compute ENOB; compare to datasheet under different Vref conditions.
+
+### Takeaways
+- Match sample time to source impedance; buffer if needed.
+- Treat Vref as a signal; decouple and route carefully.
+- Average/oversample with thought; understand latency and bandwidth tradeoffs.
+
+---
+
+## 🧪 Guided Labs
+1) ENOB measurement
+- Generate a known sine wave; sample and FFT to measure effective bits vs datasheet.
+
+2) Source impedance effects
+- Add series resistance to ADC input; observe settling time and accuracy degradation.
+
+## ✅ Check Yourself
+- How does ADC resolution affect your minimum detectable voltage change?
+- When should you use oversampling and averaging?
+
+## 🔗 Cross-links
+- `Embedded_C/Type_Qualifiers.md` for volatile register access
+- `Hardware_Fundamentals/Timer_Counter_Programming.md` for sampling timing
+
 Analog I/O involves processing continuous voltage or current signals that can take on any value within a specified range. Unlike digital I/O which deals with discrete HIGH/LOW states, analog I/O handles the infinite range of values that represent real-world phenomena.
 
 ### **Core Concepts**

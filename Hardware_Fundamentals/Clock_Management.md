@@ -25,6 +25,38 @@
 
 Clock management is fundamental to embedded system design, affecting performance, power consumption, and system reliability. Proper clock configuration ensures optimal operation and efficient resource utilization.
 
+### Concept: Frequency, sources, and stability drive everything
+
+Clocks determine peripheral timing, serial baud, PWM resolution, and power. Choose sources (HSI, HSE, PLLs) that meet jitter/stability requirements and document the tree.
+
+### Minimal example
+```c
+// Configure PLL for target SYSCLK; validate multiples for peripherals
+void clocks_init(void){ /* enable HSE, configure PLLM/N/P/Q; switch SYSCLK */ }
+```
+
+### Takeaways
+- Changing clocks affects all derived timings; centralize and recompute dependents.
+- Validate startup delays and failure modes (HSE failure, PLL lock timeout).
+- Provide a single header/API with the current clock tree for other modules.
+
+---
+
+## 🧪 Guided Labs
+1) Clock tree documentation
+- Map out your MCU's clock tree; measure actual frequencies at different points.
+
+2) Jitter measurement
+- Use an oscilloscope to measure clock jitter under different conditions.
+
+## ✅ Check Yourself
+- How do you calculate the maximum PLL frequency for your MCU?
+- When should you use external vs internal clock sources?
+
+## 🔗 Cross-links
+- `Hardware_Fundamentals/Power_Management.md` for clock gating
+- `Embedded_C/Type_Qualifiers.md` for volatile access
+
 ### **Key Concepts**
 - **Clock Sources** - Internal and external clock sources
 - **PLL Configuration** - Phase-locked loop setup and configuration

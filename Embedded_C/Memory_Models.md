@@ -22,6 +22,38 @@
 
 ## 🎯 **Overview**
 
+### Concept: Sections map to cost at startup and at runtime
+
+Know which data ends up in Flash vs RAM and what the startup code must zero or copy. Use the map file to make footprint visible and deliberate.
+
+### Why it matters in embedded
+- `.data` increases Flash (init image) and RAM (runtime) and costs boot copy time.
+- `.bss` increases RAM and costs boot zeroing time.
+- `const` moves to ROM (`.rodata`), reducing RAM.
+
+### Try it
+1. Build with a map file; identify largest contributors to `.data` and `.bss`.
+2. Move large tables to `static const` and observe `.rodata` vs `.data` changes.
+
+### Takeaways
+- Prefer `static const` for lookup tables.
+- Avoid large automatic arrays on the stack; use static storage or pools.
+- For freestanding targets, keep startup work small to reduce boot latency.
+
+---
+
+## 🧪 Guided Labs
+- Build with a map file; list top 5 contributors to `.data` and `.bss` and reduce them.
+- Move buffers from stack to static; provoke/avoid stack overflow in a controlled demo.
+
+## ✅ Check Yourself
+- What causes `.data` to consume both Flash and RAM?
+- How does `const` placement differ between hosted vs freestanding targets?
+
+## 🔗 Cross-links
+- `Embedded_C/C_Language_Fundamentals.md` for storage duration
+- `Embedded_C/Structure_Alignment.md` for layout
+
 Understanding memory models is crucial for embedded systems programming. Memory layout, segmentation, and access patterns directly impact performance, reliability, and security of embedded applications.
 
 ### **Key Concepts for Embedded Development**

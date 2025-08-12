@@ -23,6 +23,60 @@
 
 ## 🎯 **Overview**
 
+### Concept: Bits are a contract with hardware and protocols
+
+Bit operations must match datasheet-defined fields exactly; correctness and portability depend on using widths, masks, and shifts that are well-defined in C.
+
+### Why it matters in embedded
+- Register fields require precise masking/shifting without UB.
+- Protocol packing/unpacking must respect endianness and widths.
+- Shifting negative or too far is undefined; rely on fixed-width types.
+
+### Minimal example: safe field update
+```c
+#define REG (*(volatile uint32_t*)0x40000000u)
+#define MODE_Pos  4u
+#define MODE_Msk  (0x7u << MODE_Pos) // 3-bit field
+
+static inline void reg_set_mode(uint32_t mode) {
+  mode &= 0x7u;                // clamp
+  uint32_t v = REG;
+  v = (v & ~MODE_Msk) | (mode << MODE_Pos);
+  REG = v;
+}
+```
+
+### Try it
+1. Implement `get_mode()` and verify round-trip for all values 0..7.
+2. Pack a struct into a `uint32_t` payload; send over UART; unpack and verify.
+
+### Takeaways
+- Use `uint*_t`, never shift signed values.
+- Define `*_Pos` and `*_Msk` macros or enums; avoid magic numbers.
+- Document endianness where on-wire vs in-memory order differs.
+
+---
+
+## 🧪 Guided Labs
+1) Register field round-trip
+- Implement set/get for a 3-bit field and fuzz values 0..7 to verify no cross-bit contamination.
+
+2) Protocol pack/unpack
+```c
+typedef struct { uint8_t type; uint16_t value; } msg_t;
+uint32_t pack(const msg_t* m){ return ((uint32_t)m->type<<24)|((uint32_t)m->value<<8); }
+void unpack(uint32_t w, msg_t* m){ m->type=(w>>24)&0xFF; m->value=(w>>8)&0xFFFF; }
+```
+- Validate on both little and big endian hosts; discuss network order.
+
+## ✅ Check Yourself
+- Why is `(x << 31)` for signed `int` problematic?
+- How do you toggle a bit without affecting others when multiple writers exist?
+
+## 🔗 Cross-links
+- `Embedded_C/Structure_Alignment.md` for layout
+- `Embedded_C/Memory_Mapped_IO.md` for register overlays
+
 Bit manipulation is crucial in embedded systems for:
 - **Hardware register access** - Setting/clearing individual bits
 - **Memory efficiency** - Packing multiple values into single variables

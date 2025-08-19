@@ -200,11 +200,14 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 #### **Phase 3: Performance Optimization (6 weeks)**
 **Progression (concept clusters)**
 - **Code and Memory Optimization**
-  - [Code and Memory Optimization](./Performance_Optimization/Code_Memory_Optimization.md)
+  - [Code optimization techniques (algorithms, compiler flags)](./Performance_Optimization/Code_Optimization_Techniques.md)
+  - [Memory and cache-aware strategies](./Performance_Optimization/Memory_Cache_Strategies.md)
+  - [Power optimization](./Performance_Optimization/Power_Optimization.md)
 - **Profiling and Benchmarking**
-  - [Profiling and Benchmarking](./Performance_Optimization/Profiling_Benchmarking.md)
+  - [Performance profiling (function/memory)](./Performance_Optimization/Performance_Profiling.md)
+  - [Optimization tools (static/dynamic)](./Performance_Optimization/Optimization_Tools.md)
+  - [Benchmarking frameworks](./Performance_Optimization/Benchmarking_Frameworks.md)
 - **Data Structures & Algorithms**
-  - [Data Structures & Algorithms](./Performance_Optimization/Data_Structures_Algorithms.md)
   - **Fundamental Data Structures**
     - [Arrays and Bit Manipulation](./Data_Struct_Implementation/bitsArray/)
     - [Stacks and Queues](./Data_Struct_Implementation/stack/)

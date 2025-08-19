@@ -2,6 +2,75 @@
 
 > **Comprehensive guide to understanding, detecting, and preventing deadlocks in embedded real-time systems with FreeRTOS implementation examples**
 
+## 🎯 **Concept → Why it matters → Minimal example → Try it → Takeaways**
+
+### **Concept**
+Deadlocks are like a traffic gridlock where cars are stuck because each one is waiting for the car in front to move, but that car is waiting for another car, creating an endless cycle of waiting. In embedded systems, deadlocks happen when tasks get stuck waiting for resources that other tasks are holding, and nobody can make progress.
+
+### **Why it matters**
+In real-time systems, a deadlock means your system stops responding - it's like having a car that won't start when you need to get somewhere urgently. Deadlocks can cause missed deadlines, system crashes, or even safety failures. Preventing deadlocks is about designing your system so that tasks can't get into these waiting cycles.
+
+### **Minimal example**
+```c
+// Deadlock-prone code (DON'T DO THIS)
+void taskA(void *pvParameters) {
+    while (1) {
+        xSemaphoreTake(uart_mutex, portMAX_DELAY);    // Take UART first
+        vTaskDelay(pdMS_TO_TICKS(10));
+        xSemaphoreTake(spi_mutex, portMAX_DELAY);     // Then try to take SPI
+        // Use both resources
+        xSemaphoreGive(spi_mutex);
+        xSemaphoreGive(uart_mutex);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void taskB(void *pvParameters) {
+    while (1) {
+        xSemaphoreTake(spi_mutex, portMAX_DELAY);     // Take SPI first
+        vTaskDelay(pdMS_TO_TICKS(10));
+        xSemaphoreTake(uart_mutex, portMAX_DELAY);    // Then try to take UART
+        // Use both resources
+        xSemaphoreGive(uart_mutex);
+        xSemaphoreGive(spi_mutex);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+// Deadlock-safe code (DO THIS)
+void taskA_safe(void *pvParameters) {
+    while (1) {
+        xSemaphoreTake(uart_mutex, portMAX_DELAY);    // Take UART first
+        xSemaphoreTake(spi_mutex, portMAX_DELAY);     // Then take SPI
+        // Use both resources
+        xSemaphoreGive(spi_mutex);
+        xSemaphoreGive(uart_mutex);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void taskB_safe(void *pvParameters) {
+    while (1) {
+        xSemaphoreTake(uart_mutex, portMAX_DELAY);    // Take UART first (same order!)
+        xSemaphoreTake(spi_mutex, portMAX_DELAY);     // Then take SPI
+        // Use both resources
+        xSemaphoreGive(spi_mutex);
+        xSemaphoreGive(uart_mutex);
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+```
+
+### **Try it**
+- **Experiment**: Create a simple deadlock scenario and observe the system hanging
+- **Challenge**: Implement a deadlock detection system that can identify and recover from deadlocks
+- **Debug**: Use FreeRTOS hooks to monitor resource usage and detect potential deadlocks
+
+### **Takeaways**
+Deadlock prevention is about designing your resource acquisition strategy carefully - always acquire resources in the same order, use timeouts, and consider whether you really need to hold multiple resources at once.
+
+---
+
 ## 📋 **Table of Contents**
 - [Overview](#overview)
 - [Deadlock Fundamentals](#deadlock-fundamentals)
@@ -420,6 +489,110 @@ bool vEnforceResourceOrdering(uint32_t resource_mask) {
    - Test under various scenarios
    - Verify deadlock prevention
    - Measure performance impact
+
+---
+
+## 🔬 **Guided Labs**
+
+### **Lab 1: Creating a Deadlock**
+**Objective**: Understand how deadlocks occur by creating one intentionally
+**Steps**:
+1. Create two tasks that acquire resources in different orders
+2. Use delays to create timing conditions for deadlock
+3. Observe the system hanging
+4. Implement a watchdog to detect the deadlock
+
+**Expected Outcome**: Understanding of deadlock formation and detection
+
+### **Lab 2: Deadlock Prevention**
+**Objective**: Implement resource ordering to prevent deadlocks
+**Steps**:
+1. Define resource priority hierarchy
+2. Modify tasks to always acquire resources in the same order
+3. Test with the same timing conditions
+4. Verify that deadlocks no longer occur
+
+**Expected Outcome**: System that cannot deadlock due to resource ordering
+
+### **Lab 3: Deadlock Detection and Recovery**
+**Objective**: Implement a system that can detect and recover from deadlocks
+**Steps**:
+1. Implement resource usage monitoring
+2. Add timeout mechanisms to resource acquisition
+3. Create deadlock detection algorithm
+4. Implement recovery strategies (task termination, resource release)
+
+**Expected Outcome**: Robust system that can handle deadlock situations gracefully
+
+---
+
+## ✅ **Check Yourself**
+
+### **Understanding Check**
+- [ ] Can you explain what a deadlock is and why it's dangerous?
+- [ ] Do you understand the four necessary conditions for deadlock?
+- [ ] Can you identify deadlock-prone code patterns?
+- [ ] Do you know how resource ordering prevents deadlocks?
+
+### **Practical Skills Check**
+- [ ] Can you implement resource ordering in your code?
+- [ ] Do you know how to add timeout mechanisms to resource acquisition?
+- [ ] Can you implement basic deadlock detection?
+- [ ] Do you understand how to recover from deadlock situations?
+
+### **Advanced Concepts Check**
+- [ ] Can you explain the trade-offs in different deadlock prevention strategies?
+- [ ] Do you understand how to implement deadlock detection algorithms?
+- [ ] Can you design a comprehensive deadlock prevention system?
+- [ ] Do you know how to debug deadlock-related issues?
+
+---
+
+## 🔗 **Cross-links**
+
+### **Related Topics**
+- **[FreeRTOS Basics](./FreeRTOS_Basics.md)** - Understanding the RTOS context
+- **[Task Creation and Management](./Task_Creation_Management.md)** - How tasks use resources
+- **[Kernel Services](./Kernel_Services.md)** - Resource management services
+- **[Real-Time Debugging](./Real_Time_Debugging.md)** - Debugging deadlock issues
+
+### **Prerequisites**
+- **[C Language Fundamentals](../Embedded_C/C_Language_Fundamentals.md)** - Basic programming concepts
+- **[Task Creation and Management](./Task_Creation_Management.md)** - Understanding tasks
+- **[GPIO Configuration](../Hardware_Fundamentals/GPIO_Configuration.md)** - Basic I/O setup
+
+### **Next Steps**
+- **[Priority Inversion Prevention](./Priority_Inversion_Prevention.md)** - Related resource contention issues
+- **[Performance Monitoring](./Performance_Monitoring.md)** - Monitoring resource usage
+- **[Real-Time Debugging](./Real_Time_Debugging.md)** - Debugging resource issues
+
+---
+
+## 📋 **Quick Reference: Key Facts**
+
+### **Deadlock Fundamentals**
+- **Definition**: System state where tasks wait indefinitely for resources
+- **Conditions**: Mutual exclusion, hold and wait, no preemption, circular wait
+- **Types**: Resource deadlocks, communication deadlocks, livelocks
+- **Impact**: System hangs, missed deadlines, potential safety failures
+
+### **Prevention Strategies**
+- **Resource Ordering**: Always acquire resources in the same order
+- **Timeout Mechanisms**: Prevent indefinite waiting for resources
+- **Resource Allocation**: Allocate all needed resources at once
+- **Preemption**: Allow higher priority tasks to preempt resource holders
+
+### **Detection and Recovery**
+- **Resource Monitoring**: Track resource allocation and usage patterns
+- **Timeout Detection**: Detect when tasks wait too long for resources
+- **Recovery Strategies**: Task termination, resource release, system reset
+- **Prevention**: Design systems that cannot deadlock
+
+### **Implementation Guidelines**
+- **Consistent Ordering**: Establish and document resource priority hierarchy
+- **Timeout Values**: Set appropriate timeout values for resource acquisition
+- **Error Handling**: Implement graceful handling of resource acquisition failures
+- **Testing**: Test with worst-case timing scenarios
 
 ---
 

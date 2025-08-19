@@ -238,9 +238,9 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 #### **Operating Systems & Linux**
 - **Interrupts and Exceptions** - [Interrupt Fundamentals](./Operating_System/Interrupt.md), [ARM64 Exception Handling](./Operating_System/Exception_ARM64.md)
 - **Memory Management** - [Virtual Memory Concepts](./Operating_System/virtual_memory.md)
-- **Linux Kernel Programming** - Kernel modules, device drivers, system calls
-- **Process Management** - Process creation, scheduling, inter-process communication
-- **Device Drivers** - Character drivers, block drivers, network drivers
+- **Linux Kernel Programming** - [Kernel modules, device drivers, system calls](./Operating_System/Linux_Kernel_Programming.md)
+- **Process Management** - [Process creation, scheduling, inter-process communication](./Operating_System/Process_Management.md)
+- **Device Drivers** - [Character drivers, block drivers, network drivers](./Operating_System/Device_Drivers.md)
 - **System Programming** - POSIX APIs, system calls, signal handling
 - **Multi-threading** - pthread programming, thread synchronization
 - **Real-time Linux** - PREEMPT_RT, Xenomai, real-time extensions

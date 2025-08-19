@@ -1,4 +1,15 @@
-# 🔋 Power Management
+# �� Power Management
+
+## Quick Reference: Key Facts
+
+- **Power Management** is critical for battery-powered embedded systems and energy-efficient applications
+- **Power Modes** include active, idle, sleep, and deep sleep states with different current consumption profiles
+- **Sleep Modes** reduce power consumption by disabling unused peripherals and reducing clock frequencies
+- **Wake-up Sources** include external interrupts, timers, watchdog timers, and peripheral events
+- **Power Optimization** techniques include clock gating, peripheral disabling, and dynamic frequency scaling
+- **Battery Management** involves monitoring voltage, current, and state of charge for optimal operation
+- **Power Budgeting** requires measuring and allocating power consumption across different system states
+- **Energy Efficiency** is measured in microjoules per operation, not just current consumption
 
 > **Optimizing Power Consumption for Battery-Powered and Energy-Efficient Embedded Systems**  
 > Learn to implement sleep modes, wake-up sources, and power optimization techniques
@@ -44,6 +55,100 @@ void enter_sleep(void){ /* tickless idle, stop clocks, enable wakeups */ }
 - Quantify energy/event (uC per sensor read) to compare designs.
 
 ---
+
+## 🔍 Visual Understanding
+
+### **Power State Transitions**
+```
+Power State Machine
+┌─────────────────────────────────────────────────────────────┐
+│                    Power State Transitions                  │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
+│  │   ACTIVE    │───▶│    IDLE     │───▶│    SLEEP    │   │
+│  │ (Full Power)│    │(Reduced     │    │(Minimal     │   │
+│  │             │    │ Power)      │    │ Power)      │   │
+│  └─────────────┘    └─────────────┘    └─────────────┘   │
+│         ▲                   ▲                   ▲         │
+│         │                   │                   │         │
+│         └───────────────────┴───────────────────┘         │
+│                    Wake-up Events                          │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐         │
+│  │   Timer     │ │  External   │ │ Peripheral  │         │
+│  │  Interrupt  │ │  Interrupt  │ │   Event    │         │
+│  └─────────────┘ └─────────────┘ └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **Power Consumption Profile**
+```
+Power Consumption vs. Time
+Power (mW)
+   ^
+   │    ┌─────────────────────────────────────────┐
+   │    │              ACTIVE MODE               │
+   │    │         (Full Power Operation)         │
+   │    └─────────────────────────────────────────┘
+   │
+   │    ┌─────────────────────────────────────────┐
+   │    │               IDLE MODE                │
+   │    │         (Reduced Power State)          │
+   │    └─────────────────────────────────────────┘
+   │
+   │    ┌─────────────────────────────────────────┐
+   │    │              SLEEP MODE                │
+   │    │         (Minimal Power State)          │
+   │    └─────────────────────────────────────────┘
+   │
+   +───────────────────────────────────────────────> Time
+   │<->│  Wake-up  │<->│  Active   │<->│  Sleep   │
+```
+
+### **Clock Gating and Power Reduction**
+```
+Clock Gating for Power Optimization
+┌─────────────────────────────────────────────────────────────┐
+│                    Clock Gating Control                     │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐         │
+│  │   Module 1  │ │   Module 2  │ │   Module 3  │         │
+│  │ Clock Gate  │ │ Clock Gate  │ │ Clock Gate  │         │
+│  │    [ON]     │ │    [OFF]    │ │    [ON]     │         │
+│  └─────────────┘ └─────────────┘ └─────────────┘         │
+│         │               │               │                 │
+│         ▼               ▼               ▼                 │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐         │
+│  │   Active    │ │   Inactive  │ │   Active    │         │
+│  │ (Consuming  │ │ (No Power   │ │ (Consuming  │         │
+│  │   Power)    │ │  Draw)      │ │   Power)    │         │
+│  └─────────────┘ └─────────────┘ └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **🧠 Conceptual Foundation**
+
+#### **The Power Management Challenge**
+Power management in embedded systems involves balancing performance requirements with energy constraints. Unlike mains-powered systems, battery-powered devices must carefully manage every microjoule of energy to maximize operational lifetime.
+
+**Key Characteristics:**
+- **Energy Budget**: Limited energy storage requires careful allocation across system states
+- **Dynamic Scaling**: Systems must adapt power consumption to current requirements
+- **Wake-up Latency**: Trade-off between power savings and response time
+- **State Management**: Complex state machines manage transitions between power modes
+
+#### **Why Power Management Matters**
+Effective power management is essential for modern embedded systems:
+
+- **Battery Life**: Proper power management can extend battery life by 10x or more
+- **Thermal Management**: Reduced power consumption minimizes heat generation
+- **Cost Reduction**: Lower power requirements enable smaller, cheaper power supplies
+- **Environmental Impact**: Energy-efficient systems reduce environmental footprint
+
+#### **The Power-Performance Trade-off**
+Power management involves fundamental trade-offs that must be carefully considered:
+
+- **Active vs. Sleep**: Higher performance requires more power, sleep modes save energy but increase latency
+- **Frequency vs. Efficiency**: Higher clock frequencies improve performance but increase power consumption
+- **Peripheral Management**: Enabling more peripherals improves functionality but increases power draw
+- **Wake-up Strategy**: Fast wake-up sources consume more power but provide better responsiveness
 
 ## 🧪 Guided Labs
 1) Power state measurement

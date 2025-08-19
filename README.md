@@ -242,9 +242,9 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 - **Process Management** - [Process creation, scheduling, inter-process communication](./Operating_System/Process_Management.md)
 - **Device Drivers** - [Character drivers, block drivers, network drivers](./Operating_System/Device_Drivers.md)
 - **System Programming** - POSIX APIs, system calls, signal handling
-        - **Multi-threading** - [pthread programming, thread synchronization](./Operating_System/Multi_threading.md)
-        - **Real-time Linux** - [PREEMPT_RT, Xenomai, real-time extensions](./Operating_System/Real_time_Linux.md)
-        - **Embedded Linux** - [Buildroot, Yocto, custom distributions](./Operating_System/Embedded_Linux.md)
+    - **Multi-threading** - [pthread programming, thread synchronization](./Operating_System/Multi_threading.md)
+    - **Real-time Linux** - [PREEMPT_RT, Xenomai, real-time extensions](./Operating_System/Real_time_Linux.md)
+    - **Embedded Linux** - [Buildroot, Yocto, custom distributions](./Operating_System/Embedded_Linux.md)
 
 #### **Real-Time Systems & RTOS**
 - **FreeRTOS Fundamentals** - [FreeRTOS Basics](./Real_Time_Systems/FreeRTOS_Basics.md)
@@ -262,13 +262,13 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 - **Memory Systems** - [Memory Systems](./Computer_architecture/Memory_Systems.md)
 - **Direct Memory Access** - [Direct Memory Access (DMA)](./Computer_architecture/Direct_Memory_Access.md)
 - **CPU Architecture** - [ARM, x86, RISC-V, instruction sets](./Computer_architecture/CPU_Architecture.md)
-- **Memory Hierarchy** - Cache levels, virtual memory, TLB
-- **Pipeline Architecture** - Instruction pipelining, hazards, forwarding
-- **Multi-core Systems** - Cache coherency, inter-core communication
-- **Vector Processing** - SIMD instructions, vectorization
-- **Floating Point** - IEEE 754, FPU programming, precision
-- **Memory Ordering** - Memory barriers, atomic operations
-- **Performance Counters** - CPU profiling, performance monitoring
+                  - **Memory Hierarchy** - [Cache levels, virtual memory, TLB](./Computer_architecture/Memory_Hierarchy.md)
+                  - **Pipeline Architecture** - [Instruction pipelining, hazards, forwarding](./Computer_architecture/Pipeline_Architecture.md)
+                  - **Multi-core Systems** - [Cache coherency, inter-core communication](./Computer_architecture/Multi_core_Systems.md)
+                  - **Vector Processing** - [SIMD instructions, vectorization](./Computer_architecture/Vector_Processing.md)
+                  - **Floating Point** - [IEEE 754, FPU programming, precision](./Computer_architecture/Floating_Point.md)
+                  - **Memory Ordering** - [Memory barriers, atomic operations](./Computer_architecture/Memory_Ordering.md)
+                  - **Performance Counters** - [CPU profiling, performance monitoring](./Computer_architecture/Performance_Counters.md)
 
 #### **Embedded C Programming**
 - **Language Fundamentals** - [C Language Fundamentals](./Embedded_C/C_Language_Fundamentals.md)

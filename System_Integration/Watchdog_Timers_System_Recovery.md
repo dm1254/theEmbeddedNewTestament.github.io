@@ -1,5 +1,16 @@
 # Watchdog Timers and System Recovery
 
+## Quick Reference: Key Facts
+
+- **Watchdog timers** monitor system health and automatically trigger recovery when system becomes unresponsive
+- **Hardware watchdogs** are implemented in silicon and provide highest reliability vs. software watchdogs
+- **Windowed watchdogs** prevent both early and late kicks, ensuring proper timing discipline
+- **Recovery hierarchy** ranges from soft reset (task restart) to cold reset (full system restart)
+- **Petting strategy** should be intentional and reflect actual system health, not just timer maintenance
+- **Error logging** before recovery provides critical diagnostic information for post-recovery analysis
+- **Safe mode** provides minimal functionality when normal recovery fails
+- **Watchdog timeout** must balance responsiveness with false trigger prevention
+
 ## Overview
 Watchdog timers are critical safety mechanisms in embedded systems that monitor system health and automatically trigger recovery actions when the system becomes unresponsive or enters an error state. This guide covers watchdog timer implementation, system recovery strategies, and best practices for building robust embedded systems.
 
@@ -41,32 +52,79 @@ Watchdog Operation Cycle:
 └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-### System Recovery Hierarchy
+### Recovery Hierarchy
 ```
-Recovery Levels:
-┌─────────────────────────────────────────────────────────┐
-│                    Level 1: Soft Reset                 │
-│  - Restart application tasks                           │
-│  - Reinitialize peripherals                            │
-│  - Preserve critical data                              │
-├─────────────────────────────────────────────────────────┤
-│                    Level 2: Warm Reset                 │
-│  - Restart RTOS and tasks                              │
-│  - Reinitialize hardware                               │
-│  - Load configuration from non-volatile memory         │
-├─────────────────────────────────────────────────────────┤
-│                    Level 3: Cold Reset                 │
-│  - Complete system restart                             │
-│  - Full hardware initialization                        │
-│  - Load firmware from bootloader                       │
-├─────────────────────────────────────────────────────────┤
-│                    Level 4: Safe Mode                  │
-│  - Minimal functionality                               │
-│  - Error reporting and diagnostics                     │
-│  - Manual intervention required                        │
-└─────────────────────────────────────────────────────────┘
+System Recovery Hierarchy
+┌─────────────────────────────────────────────────────────────┐
+│ Level 1: Soft Reset                                        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Restart application tasks                               │ │
+│ │ Reinitialize peripherals                                │ │
+│ │ Preserve critical data                                  │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Level 2: Warm Reset                                        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Restart RTOS and tasks                                  │ │
+│ │ Reinitialize hardware                                   │ │
+│ │ Load configuration from non-volatile memory             │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Level 3: Cold Reset                                        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Complete system restart                                 │ │
+│ │ Full hardware initialization                            │ │
+│ │ Load firmware from bootloader                           │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Level 4: Safe Mode                                         │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Minimal functionality                                   │ │
+│ │ Error reporting and diagnostics                         │ │
+│ │ Manual intervention required                            │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
+### Windowed Watchdog Timing
+```
+Windowed Watchdog Timing
+┌─────────────────────────────────────────────────────────────┐
+│ Timeout Period (e.g., 1000ms)                             │
+│ ┌─────────┬─────────────┬─────────┬─────────────────────┐ │
+│ │ 0ms     │ 200ms       │ 800ms   │ 1000ms              │ │
+│ │         │ Window      │ Window  │                     │ │
+│ │ Invalid │ Start       │ End     │ Invalid              │ │
+│ │ Kick    │             │         │ Kick                 │ │
+│ └─────────┴─────────────┴─────────┴─────────────────────┘ │
+│         │             │             │                     │
+│         ▼             ▼             ▼                     │
+│     Early Kick    Valid Kick   Late Kick                 │
+│     (Violation)   (Success)    (Violation)               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Error Detection and Recovery Flow
+```
+Error Detection and Recovery Flow
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Error       │───▶│ Error       │───▶│ Recovery    │
+│ Detection   │    │ Analysis    │    │ Strategy    │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       │                   │                   │
+       ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Watchdog    │    │ Error       │    │ Execute     │
+│ Timeout     │    │ Logging     │    │ Recovery    │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                                    │
+                                                    ▼
+                                            ┌─────────────┐
+                                            │ Verify      │
+                                            │ Recovery    │
+                                            └─────────────┘
+```
 ---
 
 ## Watchdog Timer Types
@@ -860,7 +918,57 @@ void watchdog_monitoring_task(void *pvParameters) {
 
 ---
 
-## Summary
+
+## Guided Labs
+
+### Lab 1: Basic Watchdog Implementation
+1. **Setup**: Configure hardware watchdog on your target MCU
+2. **Implement**: Basic watchdog kick mechanism in main loop
+3. **Test**: Verify watchdog triggers recovery when not kicked
+4. **Add**: Watchdog activity logging and monitoring
+
+### Lab 2: Recovery Strategy Implementation
+1. **Design**: Recovery hierarchy for your system
+2. **Implement**: Different recovery levels (soft, warm, cold)
+3. **Add**: Error logging before recovery execution
+4. **Test**: Recovery effectiveness for different failure scenarios
+
+### Lab 3: Windowed Watchdog
+1. **Implement**: Windowed watchdog with configurable timing
+2. **Add**: Timing violation detection and logging
+3. **Create**: Test scenarios for early and late kicks
+4. **Validate**: Window enforcement and violation handling
+
+## Check Yourself
+
+### Understanding Check
+- [ ] Can you explain why watchdog timers are essential for embedded systems?
+- [ ] Do you understand the difference between hardware and software watchdogs?
+- [ ] Can you explain the benefits of windowed watchdogs?
+- [ ] Do you know how to select appropriate recovery strategies?
+
+### Application Check
+- [ ] Can you implement a basic watchdog system for your target?
+- [ ] Can you implement different recovery strategies?
+- [ ] Can you add error logging before recovery execution?
+- [ ] Can you implement a windowed watchdog with timing validation?
+
+### Analysis Check
+- [ ] Can you analyze watchdog timeout patterns to identify system issues?
+- [ ] Can you measure recovery time and optimize the process?
+- [ ] Can you implement safe mode functionality for critical failures?
+- [ ] Can you design comprehensive error detection and recovery systems?
+
+## Cross-links
+
+- **[Error Handling and Logging](./Error_Handling_Logging.md)** - Error detection and logging strategies
+- **[Bootloader Development](./Bootloader_Development.md)** - System recovery and restart mechanisms
+- **[Real-Time Systems](../Real_Time_Systems/Real_Time_Debugging.md)** - Real-time system monitoring and recovery
+- **[Hardware Fundamentals](../Hardware_Fundamentals/Watchdog_Timers.md)** - Hardware watchdog features
+- **[System Integration](../System_Integration/Error_Handling_Logging.md)** - System-level error handling
+
+## Conclusion
+
 Watchdog timers and system recovery mechanisms are essential for building robust embedded systems. A well-designed watchdog and recovery system provides:
 
 - **Reliability**: Automatic detection and recovery from system failures

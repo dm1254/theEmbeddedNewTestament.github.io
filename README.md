@@ -242,9 +242,9 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 - **Process Management** - [Process creation, scheduling, inter-process communication](./Operating_System/Process_Management.md)
 - **Device Drivers** - [Character drivers, block drivers, network drivers](./Operating_System/Device_Drivers.md)
 - **System Programming** - POSIX APIs, system calls, signal handling
-- **Multi-threading** - pthread programming, thread synchronization
-- **Real-time Linux** - PREEMPT_RT, Xenomai, real-time extensions
-- **Embedded Linux** - Buildroot, Yocto, custom distributions
+        - **Multi-threading** - [pthread programming, thread synchronization](./Operating_System/Multi_threading.md)
+        - **Real-time Linux** - [PREEMPT_RT, Xenomai, real-time extensions](./Operating_System/Real_time_Linux.md)
+        - **Embedded Linux** - [Buildroot, Yocto, custom distributions](./Operating_System/Embedded_Linux.md)
 
 #### **Real-Time Systems & RTOS**
 - **FreeRTOS Fundamentals** - [FreeRTOS Basics](./Real_Time_Systems/FreeRTOS_Basics.md)
@@ -258,10 +258,10 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 - **Debugging** - [Real-Time Debugging](./Real_Time_Systems/Real_Time_Debugging.md)
 
 #### **Computer Architecture**
-- **ARM Architecture** - [ARM Programmer Model](./Computer_architecture/arm_programmer_model.md)
-- **Memory Systems** - [Translation Lookaside Buffer (TLB)](./Computer_architecture/tlb.md)
-- **Direct Memory Access** - [DMA Fundamentals](./Computer_architecture/dma.md)
-- **CPU Architecture** - ARM, x86, RISC-V, instruction sets
+- **ARM Architecture** - [ARM Architecture](./Computer_architecture/ARM_Architecture.md)
+- **Memory Systems** - [Memory Systems](./Computer_architecture/Memory_Systems.md)
+- **Direct Memory Access** - [Direct Memory Access (DMA)](./Computer_architecture/Direct_Memory_Access.md)
+- **CPU Architecture** - [ARM, x86, RISC-V, instruction sets](./Computer_architecture/CPU_Architecture.md)
 - **Memory Hierarchy** - Cache levels, virtual memory, TLB
 - **Pipeline Architecture** - Instruction pipelining, hazards, forwarding
 - **Multi-core Systems** - Cache coherency, inter-core communication

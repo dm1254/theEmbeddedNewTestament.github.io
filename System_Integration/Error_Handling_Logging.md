@@ -1,5 +1,16 @@
 # Error Handling and Logging
 
+## Quick Reference: Key Facts
+
+- **Error handling** systematically detects, classifies, and responds to system failures
+- **Error classification** includes severity levels (DEBUG to FATAL) and categories (SYSTEM, HARDWARE, etc.)
+- **Fail-fast principle** detects errors early to prevent cascading failures
+- **Fail-safe principle** ensures system remains in safe state during errors
+- **Structured logging** provides consistent, searchable error information with context
+- **Error recovery** includes automatic retry, fallback mechanisms, and graceful degradation
+- **Error propagation** controls how errors flow through system layers
+- **Logging levels** filter output based on severity and system requirements
+
 ## Overview
 Error handling and logging are fundamental aspects of robust embedded system design. This guide covers comprehensive error detection, classification, handling strategies, and logging mechanisms that enable developers to build reliable, debuggable, and maintainable embedded systems.
 
@@ -50,6 +61,121 @@ Error Handling Flow:
 - **Fail Predictably**: Consistent error handling behavior
 
 ---
+
+### Error Handling Lifecycle
+```
+Error Handling Flow
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Error     │───▶│   Detection │───▶│  Analysis   │───▶│   Response  │
+│  Occurs     │    │   & Capture │    │ & Logging   │    │ & Recovery  │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │                   │
+       │                   │                   │                   │
+       ▼                   ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Monitor   │    │   Context   │    │   Severity  │    │   Escalate  │
+│  & Prevent  │    │  Collection │    │ Assessment  │    │  if Needed  │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+### Error Severity Hierarchy
+```
+Error Severity Levels
+┌─────────────────────────────────────────────────────────────┐
+│ FATAL: System failure, requires immediate attention        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ System reset, safe mode entry, external notification   │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ CRITICAL: Severe error, system may be unstable            │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Safe mode, component restart, external notification     │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ ERROR: Operation failed, functionality impaired            │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Retry, fallback, graceful degradation                   │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ WARNING: Potential issue, operation continues             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Monitor, log, user notification                         │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ INFO: Normal operation information                        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Log for monitoring and debugging                         │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ DEBUG: Detailed debugging information                     │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Log only when debugging enabled                          │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Error Response Decision Tree
+```
+Error Response Decision Tree
+┌─────────────────────────────────────────────────────────────┐
+│ Error Occurs                                               │
+│         │                                                  │
+│         ▼                                                  │
+│ ┌─────────────────┐                                        │
+│ │ Analyze Error   │                                        │
+│ │ Severity &      │                                        │
+│ │ Category        │                                        │
+│ └─────────────────┘                                        │
+│         │                                                  │
+│         ▼                                                  │
+│ ┌─────────────────┐                                        │
+│ │ Fatal Error?    │───Yes───▶│ System Reset │              │
+│ └─────────────────┘         └──────────────┘              │
+│         │                                                  │
+│         │ No                                               │
+│         ▼                                                  │
+│ ┌─────────────────┐                                        │
+│ │ Critical Error? │───Yes───▶│ Safe Mode    │              │
+│ └─────────────────┘         └──────────────┘              │
+│         │                                                  │
+│         │ No                                               │
+│         ▼                                                  │
+│ ┌─────────────────┐                                        │
+│ │ Retry Possible? │───Yes───▶│ Retry        │              │
+│ └─────────────────┘         └──────────────┘              │
+│         │                                                  │
+│         │ No                                               │
+│         ▼                                                  │
+│ ┌─────────────────┐                                        │
+│ │ Fallback        │                                        │
+│ │ Available?      │                                        │
+│ └─────────────────┘                                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Logging System Architecture
+```
+Structured Logging System
+┌─────────────────────────────────────────────────────────────┐
+│ Application Layer                                          │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ LOG(ERROR, "Operation failed")                         │ │
+│ │ LOG_WITH_CONTEXT(CRITICAL, "Memory error", data, size) │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Logging Middleware                                         │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Timestamp, Component, Function, Line, Context          │ │
+│ │ Severity filtering, Formatting, Routing                │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Output Destinations                                        │
+│ ┌─────────────┬─────────────┬─────────────┬─────────────┐ │
+│ │ Console     │ File        │ External    │ Network     │ │
+│ │ Output      │ Storage     │ System      │ Logging     │ │
+│ └─────────────┴─────────────┴─────────────┴─────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Error Classification System
 
@@ -942,7 +1068,57 @@ int handle_error(error_handling_system_t *system, error_info_t *error) {
 
 ---
 
-## Summary
+
+## Guided Labs
+
+### Lab 1: Error Classification System
+1. **Design**: Error classification scheme for your system
+2. **Implement**: Error severity levels and categories
+3. **Add**: Error code mapping and descriptions
+4. **Test**: Error classification with different scenarios
+
+### Lab 2: Fail-Safe Error Handling
+1. **Implement**: Error response strategies for different severities
+2. **Add**: Automatic retry and fallback mechanisms
+3. **Create**: Safe mode entry and system reset functions
+4. **Test**: Error handling with intentional failures
+
+### Lab 3: Structured Logging System
+1. **Design**: Log entry structure with context information
+2. **Implement**: Logging functions with severity filtering
+3. **Add**: Multiple output destinations (console, file, external)
+4. **Test**: Logging system with different scenarios and levels
+
+## Check Yourself
+
+### Understanding Check
+- [ ] Can you explain the fail-fast and fail-safe principles?
+- [ ] Do you understand the error severity hierarchy and when to use each level?
+- [ ] Can you identify appropriate error responses for different scenarios?
+- [ ] Do you know how to implement structured logging with context?
+
+### Application Check
+- [ ] Can you implement error detection and classification for your system?
+- [ ] Can you implement fail-safe error handling with appropriate responses?
+- [ ] Can you create a structured logging system with multiple outputs?
+- [ ] Can you implement error recovery mechanisms (retry, fallback, safe mode)?
+
+### Analysis Check
+- [ ] Can you analyze error patterns to identify system weaknesses?
+- [ ] Can you measure error handling performance and optimize responses?
+- [ ] Can you design comprehensive error handling for complex systems?
+- [ ] Can you implement error propagation control between system layers?
+
+## Cross-links
+
+- **[Watchdog Timers and System Recovery](./Watchdog_Timers_System_Recovery.md)** - System recovery mechanisms
+- **[Real-Time Systems](../Real_Time_Systems/Real_Time_Debugging.md)** - Real-time error handling
+- **[Debugging](../Debugging/Performance_Profiling.md)** - Error analysis and debugging
+- **[System Integration](../System_Integration/Build_Systems.md)** - Error handling in build systems
+- **[Hardware Fundamentals](../Hardware_Fundamentals/Interrupts_Exceptions.md)** - Hardware error handling
+
+## Conclusion
+
 Error handling and logging are fundamental to building robust embedded systems. A well-designed error handling system provides:
 
 - **Reliability**: Comprehensive error detection and recovery

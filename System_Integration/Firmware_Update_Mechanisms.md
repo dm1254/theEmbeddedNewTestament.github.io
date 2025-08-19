@@ -1,5 +1,16 @@
 # Firmware Update Mechanisms
 
+## Quick Reference: Key Facts
+
+- **Firmware updates** replace system software to fix bugs, add features, and address security vulnerabilities
+- **OTA (Over-the-Air)** updates allow remote firmware updates without physical access
+- **Dual-bank architecture** maintains system operation during updates with rollback capability
+- **Validation** ensures firmware integrity through checksums, CRC, or cryptographic signatures
+- **Recovery mechanisms** handle update failures through backup images or safe modes
+- **Update security** prevents unauthorized firmware installation and ensures authenticity
+- **Progress monitoring** provides user feedback and enables update interruption handling
+- **Rollback protection** allows reverting to previous firmware if update fails
+
 ## Overview
 Firmware update mechanisms are essential for maintaining and improving embedded systems throughout their lifecycle. This guide covers various update strategies including Over-the-Air (OTA) updates, wired updates, and recovery mechanisms, with a focus on reliability, security, and user experience.
 
@@ -56,6 +67,97 @@ Update Process Flow:
 │   Rollback  │    │   Progress  │    │   Integrity │    │   Success/  │
 │  Protection │    │  Monitoring │    │   Checking  │    │   Failure   │
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+### Dual-Bank Memory Layout
+```
+Dual-Bank Firmware Update Architecture
+┌─────────────────────────────────────────────────────────────┐
+│ Bank A (Active) │ Bank B (Inactive)                        │
+│ 0x08000000      │ 0x08040000                               │
+│ ┌─────────────┐ │ ┌─────────────┐                          │
+│ │ Firmware    │ │ │ Update      │                          │
+│ │ Header      │ │ │ Buffer      │                          │
+│ ├─────────────┤ │ ├─────────────┤                          │
+│ │ Application │ │ │ New        │                          │
+│ │ Code        │ │ │ Firmware   │                          │
+│ ├─────────────┤ │ ├─────────────┤                          │
+│ │ Application │ │ │ (or old    │                          │
+│ │ Data        │ │ │ firmware)  │                          │
+│ └─────────────┘ │ └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Update Process Flow
+```
+Firmware Update Process
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Update      │───▶│ Download    │───▶│ Validation  │
+│ Detection   │    │ New FW      │    │ & Security  │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       │                   │                   │
+       ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Rollback    │    │ Progress    │    │ Integrity   │
+│ Protection  │    │ Monitoring  │    │ Checking    │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                                    │
+                                                    ▼
+                                            ┌─────────────┐
+                                            │Installation │
+                                            │& Activation │
+                                            └─────────────┘
+```
+
+### Update Security Layers
+```
+Firmware Update Security
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 1: Transport Security                                │
+│ ├── TLS/SSL encryption                                    │
+│ ├── Certificate validation                                 │
+│ └── Secure communication channels                          │
+├─────────────────────────────────────────────────────────────┤
+│ Layer 2: Firmware Integrity                               │
+│ ├── Checksum verification                                  │
+│ ├── CRC validation                                         │
+│ └── Hash verification                                      │
+├─────────────────────────────────────────────────────────────┤
+│ Layer 3: Cryptographic Authentication                      │
+│ ├── Digital signatures                                     │
+│ ├── Public key validation                                  │
+│ └── Certificate chain verification                         │
+├─────────────────────────────────────────────────────────────┤
+│ Layer 4: Access Control                                    │
+│ ├── User authentication                                    │
+│ ├── Authorization checks                                   │
+│ └── Update permissions                                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Recovery Mechanisms
+```
+Update Recovery Strategies
+┌─────────────────────────────────────────────────────────────┐
+│ Primary Recovery: Automatic Rollback                       │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐ │
+│ │ Update      │ │ Validation  │ │ Rollback to             │ │
+│ │ Failure     │ │ Failed      │ │ Previous Firmware       │ │
+│ └─────────────┘ └─────────────┘ └─────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Secondary Recovery: Safe Mode                             │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐ │
+│ │ Rollback    │ │ Safe Mode   │ │ Manual Recovery         │ │
+│ │ Failed      │ │ Entry       │ │ via External Interface  │ │
+│ └─────────────┘ └─────────────┘ └─────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Tertiary Recovery: Factory Reset                          │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────────┐ │
+│ │ All Recovery│ │ Factory     │ │ System Restored         │ │
+│ │ Failed      │ │ Reset       │ │ to Default State        │ │
+│ └─────────────┘ └─────────────┘ └─────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -856,7 +958,57 @@ int perform_ota_update(ota_update_system_t *ota_system) {
 
 ---
 
-## Summary
+
+## Guided Labs
+
+### Lab 1: Dual-Bank Update System
+1. **Design**: Memory layout for dual-bank architecture
+2. **Implement**: Bank switching mechanism with validation
+3. **Add**: Rollback capability for failed updates
+4. **Test**: Update process with intentional failures
+
+### Lab 2: Firmware Validation Implementation
+1. **Create**: Firmware header structure with security fields
+2. **Implement**: Multiple validation layers (checksum, signature)
+3. **Add**: Cryptographic signature verification
+4. **Test**: Validation with corrupted and malicious firmware
+
+### Lab 3: Update Progress and Recovery
+1. **Implement**: Progress monitoring with callback system
+2. **Add**: Progress persistence for recovery
+3. **Create**: Recovery mechanisms for interrupted updates
+4. **Test**: Update interruption and recovery scenarios
+
+## Check Yourself
+
+### Understanding Check
+- [ ] Can you explain the benefits of dual-bank architecture for firmware updates?
+- [ ] Do you understand the different layers of update security?
+- [ ] Can you identify when to use different recovery mechanisms?
+- [ ] Do you know how to implement update progress monitoring?
+
+### Application Check
+- [ ] Can you implement a dual-bank update system for your target hardware?
+- [ ] Can you add multiple validation layers to firmware updates?
+- [ ] Can you implement update progress tracking and recovery?
+- [ ] Can you handle update failures gracefully with rollback?
+
+### Analysis Check
+- [ ] Can you analyze update security vulnerabilities in your system?
+- [ ] Can you measure update performance and optimize the process?
+- [ ] Can you implement secure update channels (OTA, wired)?
+- [ ] Can you design recovery mechanisms for different failure scenarios?
+
+## Cross-links
+
+- **[Bootloader Development](./Bootloader_Development.md)** - Bootloader update mechanisms
+- **[Error Handling and Logging](./Error_Handling_Logging.md)** - Update error handling strategies
+- **[Security](../Embedded_Security/Secure_Boot_Chain_Trust.md)** - Update security considerations
+- **[Communication Protocols](../Communication_Protocols/Network_Protocols.md)** - Update communication channels
+- **[Memory Management](../Embedded_C/Memory_Management.md)** - Update memory management
+
+## Conclusion
+
 Firmware update mechanisms are critical for maintaining embedded systems throughout their lifecycle. A well-designed update system provides:
 
 - **Reliability**: Robust update processes with comprehensive error handling

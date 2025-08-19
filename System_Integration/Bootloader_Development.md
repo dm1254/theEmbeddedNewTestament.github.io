@@ -1,5 +1,16 @@
 # Bootloader Development
 
+## Quick Reference: Key Facts
+
+- **Bootloader** is the first software that runs after power-on, initializing hardware and launching the main application
+- **Boot sequence** follows: Power-On → Hardware Reset → Bootloader → Validation → Application Jump
+- **Memory layout** must be carefully planned with bootloader at fixed address, application at configurable location
+- **Validation** ensures firmware integrity through checksums, CRC, or cryptographic signatures
+- **Update mechanisms** allow firmware updates without physical access to the device
+- **Recovery strategies** handle corrupted firmware through backup images or safe modes
+- **Security** prevents unauthorized firmware installation and ensures chain of trust
+- **State machine** design provides predictable boot behavior and error handling
+
 ## Overview
 A bootloader is the first piece of software that runs when an embedded system powers on. It serves as a bridge between hardware initialization and the main application, providing essential services like hardware setup, application validation, and firmware update capabilities.
 
@@ -52,6 +63,105 @@ Memory Map:
 ---
 
 ## Bootloader Architecture
+
+### Bootloader Memory Layout
+```
+Memory Map (Typical ARM Cortex-M)
+┌─────────────────────────────────────────────────────────────┐
+│ 0x08000000 │ Bootloader (32KB)                            │
+│            │ ├── Vector Table                              │
+│            │ ├── Hardware Init                             │
+│            │ ├── Validation Logic                          │
+│            │ └── Update Handler                            │
+├─────────────────────────────────────────────────────────────┤
+│ 0x08008000 │ Application (Variable Size)                  │
+│            │ ├── Vector Table (Remapped)                  │
+│            │ ├── Main Application                          │
+│            │ └── Application Data                          │
+├─────────────────────────────────────────────────────────────┤
+│ 0x20000000 │ RAM                                          │
+│            │ ├── Stack                                     │
+│            │ ├── Variables                                 │
+│            │ └── Update Buffer                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Boot Sequence Flow
+```
+Power-On Reset
+       │
+       ▼
+┌─────────────────┐
+│ Hardware Reset  │
+│ CPU, Peripherals│
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│ Bootloader      │
+│ Entry Point     │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│ Hardware Init   │
+│ Clocks, Memory  │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│ Update Check    │
+│ New Firmware?   │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│ Validation      │
+│ Checksum, CRC   │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│ Application     │
+│ Jump            │
+└─────────────────┘
+```
+
+### State Machine Transitions
+```
+Bootloader State Machine
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│    INIT     │───▶│ HARDWARE   │───▶│   UPDATE   │
+│             │    │   SETUP    │    │   CHECK    │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                │                    │
+       │                │                    │
+       ▼                ▼                    ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   ERROR     │    │   ERROR     │    │ VALIDATION │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                                    │
+                                                    ▼
+                                            ┌─────────────┐
+                                            │APPLICATION  │
+                                            │   JUMP     │
+                                            └─────────────┘
+```
+
+### Update Process Flow
+```
+Firmware Update Process
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Update Request  │───▶│ Download        │───▶│ Validation      │
+│ (UART/Network) │    │ New Firmware    │    │ Checksum/CRC    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+                                                        ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Restart System  │◀───│ Flash New       │◀───│ Backup Current  │
+│ with New FW     │    │ Firmware       │    │ Firmware        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ### Modular Design Approach
 The bootloader should be designed with clear separation of concerns:
@@ -662,7 +772,57 @@ int bootloader_main(void) {
 
 ---
 
-## Summary
+
+## Guided Labs
+
+### Lab 1: Basic Bootloader Implementation
+1. **Setup**: Create a minimal bootloader project for your target MCU
+2. **Implement**: Basic hardware initialization (clocks, memory, GPIO)
+3. **Add**: Application validation with simple checksum
+4. **Test**: Verify bootloader can jump to application
+
+### Lab 2: Memory Layout and Linker Scripts
+1. **Design**: Memory layout for bootloader and application
+2. **Create**: Linker script that properly separates sections
+3. **Verify**: Memory map matches design requirements
+4. **Test**: Bootloader and application load at correct addresses
+
+### Lab 3: Update Mechanism Implementation
+1. **Implement**: UART-based firmware download
+2. **Add**: Firmware validation (checksum, size check)
+3. **Create**: Safe update process with rollback capability
+4. **Test**: Complete update cycle from download to restart
+
+## Check Yourself
+
+### Understanding Check
+- [ ] Can you explain the boot sequence and why each phase is necessary?
+- [ ] Do you understand how memory layout affects bootloader operation?
+- [ ] Can you identify when to use different validation methods?
+- [ ] Do you know how to implement a safe update mechanism?
+
+### Application Check
+- [ ] Can you implement a basic bootloader for your target hardware?
+- [ ] Can you design memory layout that separates bootloader and application?
+- [ ] Can you implement application validation and update mechanisms?
+- [ ] Can you handle boot failures and recovery scenarios?
+
+### Analysis Check
+- [ ] Can you analyze bootloader performance and optimize startup time?
+- [ ] Can you identify security vulnerabilities in bootloader design?
+- [ ] Can you debug bootloader issues using hardware debuggers?
+- [ ] Can you measure boot time and identify bottlenecks?
+
+## Cross-links
+
+- **[Firmware Update Mechanisms](./Firmware_Update_Mechanisms.md)** - Implementing safe update processes
+- **[Error Handling and Logging](./Error_Handling_Logging.md)** - Bootloader error handling strategies
+- **[Hardware Fundamentals](../Hardware_Fundamentals/Clock_Management.md)** - Hardware initialization techniques
+- **[Memory Management](../Embedded_C/Memory_Management.md)** - Memory layout and management
+- **[Security](../Embedded_Security/Secure_Boot_Chain_Trust.md)** - Bootloader security considerations
+
+## Conclusion
+
 Bootloader development is a critical aspect of embedded system design that requires careful consideration of hardware initialization, application management, security, and reliability. A well-designed bootloader provides the foundation for robust system operation and enables safe firmware updates throughout the product lifecycle.
 
 The key to successful bootloader development lies in:

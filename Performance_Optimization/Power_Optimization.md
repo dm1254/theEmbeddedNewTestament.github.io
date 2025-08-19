@@ -1,5 +1,16 @@
 # Power Optimization
 
+## Quick Reference: Key Facts
+
+- **Power consumption** is proportional to voltage² × frequency in processors
+- **DVFS** (Dynamic Voltage and Frequency Scaling) provides quadratic power savings
+- **Power states** range from active to deep sleep, with trade-offs between power and wake-up time
+- **Memory power** varies significantly between on-chip (low) and off-chip (high) access
+- **Power-aware scheduling** groups tasks to minimize power state transitions
+- **Peripheral devices** often consume significant power and support multiple power states
+- **Algorithm selection** affects power through computation vs. memory access trade-offs
+- **Power budgeting** allocates power across components based on importance and efficiency
+
 ## The Unique Challenge of Power Constraints
 
 Power optimization represents a unique challenge in embedded systems where power consumption is often a critical constraint. Unlike performance optimization, which can often be achieved through increased resource usage, power optimization requires finding ways to achieve the same results with less energy consumption. This often involves fundamental changes to the system architecture and operating principles.
@@ -7,6 +18,107 @@ Power optimization represents a unique challenge in embedded systems where power
 The optimization of power consumption begins with understanding the power characteristics of different system components. Processors consume power during active operation, with power consumption generally proportional to clock frequency and voltage. Memory systems consume power during access operations, with different types of memory having different power characteristics. Peripheral devices consume power when active and may have significant standby power consumption.
 
 Power optimization techniques include dynamic voltage and frequency scaling, power-aware scheduling, and intelligent power management. Dynamic voltage and frequency scaling adjusts the processor's operating parameters based on the current workload, reducing power consumption when full performance is not required. Power-aware scheduling considers power consumption when making scheduling decisions, preferring power-efficient execution paths when possible. Intelligent power management puts unused system components into low-power states, reducing overall system power consumption.
+
+## Core Concepts
+
+### **Concept: Power vs. Performance Trade-off**
+**Why it matters**: Power consumption is proportional to voltage² × frequency, making voltage reduction much more effective than frequency reduction for power savings.
+
+**Minimal example**:
+```c
+// Power-aware frequency and voltage scaling
+typedef enum {
+    POWER_MODE_LOW = 0,    // Low freq, low voltage
+    POWER_MODE_MEDIUM,     // Medium freq, medium voltage
+    POWER_MODE_HIGH        // High freq, high voltage
+} power_mode_t;
+
+void set_power_mode(power_mode_t mode) {
+    switch (mode) {
+        case POWER_MODE_LOW:
+            set_cpu_frequency(CPU_FREQ_LOW);      // 50MHz
+            set_cpu_voltage(CPU_VOLTAGE_LOW);     // 1.2V
+            break;
+        case POWER_MODE_MEDIUM:
+            set_cpu_frequency(CPU_FREQ_MEDIUM);   // 100MHz
+            set_cpu_voltage(CPU_VOLTAGE_MEDIUM);  // 1.8V
+            break;
+        case POWER_MODE_HIGH:
+            set_cpu_frequency(CPU_FREQ_HIGH);     // 200MHz
+            set_cpu_voltage(CPU_VOLTAGE_HIGH);    // 3.3V
+            break;
+    }
+}
+```
+
+**Try it**: Measure power consumption at different frequency/voltage combinations.
+
+**Takeaways**: Voltage reduction provides quadratic power savings, making it more effective than frequency reduction.
+
+### **Concept: Power State Management**
+**Why it matters**: Different power states offer different power savings vs. wake-up latency trade-offs, requiring intelligent state selection.
+
+**Minimal example**:
+```c
+// Power state management with wake-up time consideration
+typedef struct {
+    uint32_t power_consumption;  // mA
+    uint32_t wake_up_time;       // ms
+    const char* name;
+} power_state_t;
+
+const power_state_t power_states[] = {
+    {100, 0, "Active"},          // Full power, instant wake
+    {50,  1, "Idle"},            // Reduced power, fast wake
+    {10,  10, "Sleep"},          // Low power, medium wake
+    {1,   100, "Deep Sleep"}     // Minimal power, slow wake
+};
+
+power_state_t select_power_state(uint32_t expected_idle_time) {
+    if (expected_idle_time < 5) return power_states[1];      // Idle
+    if (expected_idle_time < 50) return power_states[2];     // Sleep
+    return power_states[3];                                  // Deep Sleep
+}
+```
+
+**Try it**: Profile power consumption and wake-up times for different power states.
+
+**Takeaways**: Choose power states based on expected idle duration and acceptable wake-up latency.
+
+### **Concept: Power-Aware Task Scheduling**
+**Why it matters**: Grouping related tasks minimizes power state transitions, reducing overhead and improving overall efficiency.
+
+**Minimal example**:
+```c
+// Power-aware task scheduling
+typedef struct {
+    uint32_t priority;
+    uint32_t power_requirement;
+    uint32_t execution_time;
+} task_t;
+
+void schedule_power_efficient(task_t tasks[], int num_tasks) {
+    // Sort tasks by power requirement (low to high)
+    for (int i = 0; i < num_tasks - 1; i++) {
+        for (int j = i + 1; j < num_tasks; j++) {
+            if (tasks[i].power_requirement > tasks[j].power_requirement) {
+                task_t temp = tasks[i];
+                tasks[i] = tasks[j];
+                tasks[j] = temp;
+            }
+        }
+    }
+    
+    // Execute tasks in power-efficient order
+    for (int i = 0; i < num_tasks; i++) {
+        execute_task(&tasks[i]);
+    }
+}
+```
+
+**Try it**: Compare power consumption of random vs. power-aware task ordering.
+
+**Takeaways**: Group low-power tasks together to minimize power state transitions.
 
 ## Dynamic Voltage and Frequency Scaling (DVFS)
 
@@ -79,6 +191,105 @@ Effective power optimization requires careful power budgeting and resource alloc
 Power budgeting involves setting power consumption targets for different system components and monitoring actual consumption against these targets. The system can adjust component behavior to stay within power budgets, such as reducing processor frequency or limiting peripheral device usage when power consumption approaches budget limits.
 
 Resource allocation should consider power efficiency as well as performance requirements. The system should allocate resources to provide the best power efficiency for the current workload, often involving trade-offs between different optimization objectives. This requires sophisticated resource management algorithms that can balance multiple competing requirements.
+
+## Visual Representations
+
+### Power Consumption vs. Performance
+```
+Power Consumption
+    │
+    │    ████████████████████████████████
+    │   █                               █
+    │  █                                 █
+    │ █                                   █
+    │█                                     █
+    │█                                     █
+    └─┼─────────────────────────────────────┼─ Performance
+      │                                     │
+    Low                                   High
+```
+
+### Power State Hierarchy
+```
+Power States (from highest to lowest power)
+┌─────────────────────────────────────────────────────────────┐
+│ Active Mode     │ Full performance, instant response        │
+├─────────────────┼───────────────────────────────────────────┤
+│ Idle Mode       │ Reduced power, fast wake-up (<1ms)       │
+├─────────────────┼───────────────────────────────────────────┤
+│ Sleep Mode      │ Low power, medium wake-up (1-10ms)       │
+├─────────────────┼───────────────────────────────────────────┤
+│ Deep Sleep      │ Minimal power, slow wake-up (100ms+)     │
+└─────────────────┴───────────────────────────────────────────┘
+```
+
+### DVFS Power Savings
+```
+Power Savings from Voltage/Frequency Scaling
+┌─────────────────────────────────────────────────────────────┐
+│ Frequency: 100% → 50%     │ Power: 100% → 50%             │
+│ Voltage:   100% → 70%     │ Power: 100% → 49% (70%²)      │
+│ Combined:                  │ Power: 100% → 24.5%           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Power-Aware Scheduling
+```
+Traditional:     Power-Aware:
+Task1→Task2→Task3  Low-Power Tasks → High-Power Tasks
+Power: ████████    Power: ████████
+       ││││││││           ││││││││
+       ││││││││           ││││││││
+       ││││││││           ││││││││
+```
+
+## Guided Labs
+
+### Lab 1: Power State Profiling
+1. **Setup**: Configure different power states on your target
+2. **Measure**: Power consumption in each state using current meter
+3. **Time**: Wake-up latency from each state
+4. **Analyze**: Power vs. latency trade-offs for your application
+
+### Lab 2: DVFS Impact Analysis
+1. **Implement**: Dynamic frequency and voltage scaling
+2. **Profile**: Power consumption at different frequency/voltage combinations
+3. **Measure**: Performance impact of power reduction
+4. **Optimize**: Find optimal power-performance operating points
+
+### Lab 3: Power-Aware Task Scheduling
+1. **Create**: Tasks with different power requirements
+2. **Implement**: Both random and power-aware scheduling
+3. **Measure**: Total power consumption for each approach
+4. **Analyze**: When does power-aware scheduling provide the most benefit?
+
+## Check Yourself
+
+### Understanding Check
+- [ ] Can you explain the relationship between voltage, frequency, and power consumption?
+- [ ] Do you understand the trade-offs between different power states?
+- [ ] Can you identify when DVFS would be beneficial vs. when it wouldn't?
+- [ ] Do you know how power-aware scheduling differs from traditional scheduling?
+
+### Application Check
+- [ ] Can you implement power state transitions in your system?
+- [ ] Can you design power-aware task scheduling algorithms?
+- [ ] Can you optimize memory access patterns for power efficiency?
+- [ ] Can you implement power budgeting across system components?
+
+### Analysis Check
+- [ ] Can you profile power consumption patterns in your system?
+- [ ] Can you measure the power impact of different optimization techniques?
+- [ ] Can you balance power efficiency vs. performance requirements?
+- [ ] Can you predict power requirements based on workload characteristics?
+
+## Cross-links
+
+- **[Code Optimization Techniques](./Code_Optimization_Techniques.md)** - Algorithmic and compiler optimization
+- **[Memory Cache Strategies](./Memory_Cache_Strategies.md)** - Memory power optimization
+- **[Real-Time Systems](../Real_Time_Systems/Power_Management.md)** - Power management in real-time systems
+- **[Hardware Fundamentals](../Hardware_Fundamentals/Power_Management.md)** - Hardware power management features
+- **[Performance Profiling](./Performance_Profiling.md)** - Measuring power consumption and performance
 
 ## Conclusion
 

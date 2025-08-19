@@ -1,5 +1,16 @@
 # ⏱️ Pulse Width Modulation
 
+## Quick Reference: Key Facts
+
+- **Pulse Width Modulation (PWM)** controls power delivery by rapidly switching between on/off states
+- **Duty Cycle** is the percentage of time the signal is high, controlling average power output
+- **Frequency** determines the switching rate and affects efficiency, noise, and resolution
+- **Resolution** is the number of discrete duty cycle levels, inversely related to frequency
+- **Timer Hardware** generates PWM using compare registers and output compare modes
+- **Applications** include motor control, LED dimming, power supplies, and audio generation
+- **Filtering** can convert PWM to analog signals, effectively creating a DAC
+- **Trade-offs** exist between frequency (noise), resolution (precision), and efficiency
+
 > **Mastering PWM for Embedded Systems**  
 > PWM generation, frequency control, duty cycle, and practical applications
 
@@ -44,30 +55,123 @@ void pwm_set_duty(uint16_t duty){ /* write CCRx, clamp to ARR */ }
 
 ---
 
-## 🧪 Guided Labs
-1) Resolution vs frequency trade-off
-- Generate PWM at different frequencies; measure actual resolution with an oscilloscope.
+## 🔍 Visual Understanding
 
-2) Filtered PWM as DAC
-- Apply RC filter to PWM output; measure ripple and settling time.
+### **PWM Signal Characteristics**
+```
+PWM Signal Parameters
+┌─────────────────────────────────────────────────────────────┐
+│                    PWM Signal Analysis                      │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              High Frequency PWM                     │   │
+│  │  ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐       │   │
+│  │  │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │       │   │
+│  │  │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │       │   │
+│  │  └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘       │   │
+│  │  │<->│ Period │<->│ Period │<->│ Period │<->│       │   │
+│  │  │<->│ Duty   │<->│ Duty   │<->│ Duty   │<->│       │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            │                               │
+│                            ▼                               │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              Low Frequency PWM                      │   │
+│  │  ┌─────────────┐    ┌─────────────┐    ┌─────────┐ │   │
+│  │  │             │    │             │    │         │ │   │
+│  │  │             │    │             │    │         │ │   │
+│  │  └─────────────┘    └─────────────┘    └─────────┘ │   │
+│  │  │<---------->│ Period │<---------->│ Period │<->│ │   │
+│  │  │<---------->│ Duty   │<---------->│ Duty   │<->│ │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## ✅ Check Yourself
-- How does PWM frequency affect motor efficiency and audible noise?
-- When should you use center-aligned vs edge-aligned PWM?
+### **Duty Cycle and Power Control**
+```
+Duty Cycle vs Power Output
+┌─────────────────────────────────────────────────────────────┐
+│                    Duty Cycle Control                      │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐         │
+│  │   25% Duty  │ │   50% Duty  │ │   75% Duty  │         │
+│  │   ┌─┐ ┌─┐  │ │  ┌───┐ ┌───┐│ │ ┌─────┐ ┌─┐│         │
+│  │   │ │ │ │  │ │  │   │ │   │ │ │ │     │ │ ││         │
+│  │   │ │ │ │  │ │  │   │ │   │ │ │ │     │ │ ││         │
+│  │   └─┘ └─┘  │ │  └───┘ └───┘│ │ └─────┘ └─┘│         │
+│  │   │<->│     │ │  │<--->│<--->│ │ │<----->│<->│         │
+│  │   │   │     │ │  │     │     │ │ │       │   │         │
+│  └─────────────┘ └─────────────┘ └─────────────┘         │
+│         │               │               │                 │
+│         ▼               ▼               ▼                 │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐         │
+│  │   Low       │ │  Medium     │ │   High      │         │
+│  │   Power     │ │   Power     │ │   Power     │         │
+│  │  (25% Avg)  │ │  (50% Avg)  │ │  (75% Avg)  │         │
+│  └─────────────┘ └─────────────┘ └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## 🔗 Cross-links
-- `Hardware_Fundamentals/Timer_Counter_Programming.md` for timer configuration
-- `Hardware_Fundamentals/Analog_IO.md` for DAC alternatives
+### **PWM Filtering and DAC Effect**
+```
+PWM to Analog Conversion
+┌─────────────────────────────────────────────────────────────┐
+│                    PWM Filtering Process                   │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              Raw PWM Signal                         │   │
+│  │  ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐       │   │
+│  │  │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │       │   │
+│  │  │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │ │       │   │
+│  │  └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘ └─┘       │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            │                               │
+│                            ▼                               │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              RC Low-Pass Filter                     │   │
+│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐   │   │
+│  │  │     R       │ │     C       │ │             │   │   │
+│  │  │             │ │             │ │             │   │   │
+│  │  └─────────────┘ └─────────────┘ └─────────────┘   │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            │                               │
+│                            ▼                               │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              Filtered Analog Output                 │   │
+│  │  ┌─────────────────────────────────────────────┐   │   │
+│  │  │                                             │   │   │
+│  │  │                                             │   │   │
+│  │  │                                             │   │   │
+│  │  │                                             │   │   │
+│  │  └─────────────────────────────────────────────┘   │   │
+│  │  │<---------->│ Average Value │<---------->│       │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-Pulse Width Modulation (PWM) is a technique used to control power delivery to electrical devices by rapidly switching between on and off states. It's widely used in motor control, LED dimming, power supplies, and audio applications.
+### **🧠 Conceptual Foundation**
 
-**Key Concepts:**
-- **Duty Cycle**: Percentage of time signal is high
-- **Frequency**: Rate of PWM switching
-- **Resolution**: Number of discrete duty cycle levels
-- **Applications**: Motor control, LED dimming, power conversion
+#### **The PWM Principle**
+Pulse Width Modulation represents a fundamental technique for digital control of analog systems. By rapidly switching a digital signal between high and low states, PWM creates an effective analog output whose average value is proportional to the duty cycle.
 
----
+**Key Characteristics:**
+- **Digital Control**: PWM uses digital signals to control analog power levels
+- **Efficiency**: Switching operation minimizes power dissipation in control elements
+- **Flexibility**: Duty cycle and frequency can be independently controlled
+- **Scalability**: Same technique works from milliwatts to kilowatts
+
+#### **Why PWM Matters**
+PWM is essential for modern embedded systems:
+
+- **Power Control**: Enables precise control of motor speed, LED brightness, and power conversion
+- **Efficiency**: Switching operation is more efficient than linear control methods
+- **Digital Integration**: PWM can be generated directly by microcontroller timers
+- **Noise Control**: Frequency selection can move switching noise away from sensitive bands
+- **Cost Effectiveness**: PWM control is often cheaper than analog alternatives
+
+#### **The PWM Design Challenge**
+Designing effective PWM systems involves balancing multiple competing requirements:
+
+- **Frequency Selection**: Higher frequencies provide smoother output but increase switching losses
+- **Resolution vs. Frequency**: Timer constraints create trade-offs between precision and switching rate
+- **Noise Management**: Switching frequency must be chosen to minimize interference
+- **Filter Design**: RC filters can convert PWM to analog but introduce delay and ripple
 
 ## 🔧 PWM Fundamentals
 

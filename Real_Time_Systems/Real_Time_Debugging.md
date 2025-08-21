@@ -1,6 +1,58 @@
-# Real-Time Debugging and Trace Analysis
+# Real-Time Debugging in RTOS
 
-> **Comprehensive guide to implementing real-time debugging systems and trace analysis for embedded real-time systems with FreeRTOS examples**
+> **Understanding real-time debugging techniques, tools, and strategies for embedded systems with focus on FreeRTOS debugging and real-time system troubleshooting**
+
+## 🎯 **Concept → Why it matters → Minimal example → Try it → Takeaways**
+
+### **Concept**
+Real-time debugging is like being a detective investigating a crime scene where the evidence keeps changing. Unlike regular debugging where you can pause and examine things at your leisure, real-time debugging requires you to catch problems "in the act" without disrupting the system's timing.
+
+### **Why it matters**
+In real-time systems, timing is everything. A bug that only appears when the system is running at full speed might be invisible when you pause execution. Real-time debugging techniques help you find these elusive timing-related bugs without breaking the real-time guarantees your system depends on.
+
+### **Minimal example**
+```c
+// Real-time debugging with minimal overhead
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+    // Log stack overflow without blocking
+    static uint32_t overflow_count = 0;
+    overflow_count++;
+    
+    // Use GPIO for immediate visual feedback
+    GPIO_SetBits(GPIOA, GPIO_Pin_0);  // Set LED to indicate overflow
+    
+    // Log minimal information
+    log_debug_event("STACK_OVERFLOW", pcTaskName, overflow_count);
+    
+    // Take corrective action if possible
+    if (overflow_count < 3) {
+        // Try to recover
+        vTaskDelete(xTask);
+    } else {
+        // System reset after multiple overflows
+        NVIC_SystemReset();
+    }
+}
+
+// Non-blocking debug output
+void debug_print(const char* message) {
+    // Use circular buffer to avoid blocking
+    if (debug_buffer_space_available()) {
+        debug_buffer_write(message, strlen(message));
+    }
+    // Don't block if buffer is full
+}
+```
+
+### **Try it**
+- **Experiment**: Add debug hooks to your FreeRTOS system and monitor system health
+- **Challenge**: Implement a non-blocking debug system that doesn't affect timing
+- **Debug**: Use GPIO and oscilloscopes to debug timing issues in real-time
+
+### **Takeaways**
+Real-time debugging requires a different mindset - you need to observe the system while it's running, use non-intrusive techniques, and think about timing implications of every debugging action.
+
+---
 
 ## 📋 **Table of Contents**
 - [Overview](#overview)
@@ -899,6 +951,110 @@ void vTraceAnalysisTask(void *pvParameters) {
    - Data export capabilities
    - Real-time monitoring
    - Alert system
+
+---
+
+## 🔬 **Guided Labs**
+
+### **Lab 1: FreeRTOS Debug Hooks**
+**Objective**: Implement basic debug hooks for system monitoring
+**Steps**:
+1. Enable FreeRTOS debug hooks (stack overflow, malloc failed)
+2. Implement non-blocking debug output
+3. Use GPIO for immediate visual feedback
+4. Test with intentional errors
+
+**Expected Outcome**: System health monitoring without affecting timing
+
+### **Lab 2: Real-Time Trace Analysis**
+**Objective**: Implement trace collection and analysis
+**Steps**:
+1. Create circular buffer for trace data
+2. Add trace points at key system events
+3. Implement trace data export via UART
+4. Analyze trace data for timing issues
+
+**Expected Outcome**: Complete visibility into system behavior over time
+
+### **Lab 3: Non-Intrusive Debugging**
+**Objective**: Debug timing issues without affecting system performance
+**Steps**:
+1. Use GPIO to measure task execution times
+2. Implement performance counters for key operations
+3. Create debug dashboard with minimal overhead
+4. Test under different load conditions
+
+**Expected Outcome**: Effective debugging without breaking real-time guarantees
+
+---
+
+## ✅ **Check Yourself**
+
+### **Understanding Check**
+- [ ] Can you explain why real-time debugging is different from regular debugging?
+- [ ] Do you understand how to debug without affecting system timing?
+- [ ] Can you identify when to use different debugging techniques?
+- [ ] Do you know how to implement non-blocking debug output?
+
+### **Practical Skills Check**
+- [ ] Can you set up FreeRTOS debug hooks?
+- [ ] Do you know how to use GPIO for real-time debugging?
+- [ ] Can you implement trace collection without affecting performance?
+- [ ] Do you understand how to debug timing-related issues?
+
+### **Advanced Concepts Check**
+- [ ] Can you explain the trade-offs in real-time debugging design?
+- [ ] Do you understand how to correlate different debug data sources?
+- [ ] Can you implement adaptive debugging based on system load?
+- [ ] Do you know how to handle debug system failures gracefully?
+
+---
+
+## 🔗 **Cross-links**
+
+### **Related Topics**
+- **[FreeRTOS Basics](./FreeRTOS_Basics.md)** - Understanding the RTOS context
+- **[Performance Monitoring](./Performance_Monitoring.md)** - Using performance data for debugging
+- **[Task Creation and Management](./Task_Creation_Management.md)** - Debugging task-related issues
+- **[Interrupt Handling](./Interrupt_Handling.md)** - Debugging interrupt problems
+
+### **Prerequisites**
+- **[C Language Fundamentals](../Embedded_C/C_Language_Fundamentals.md)** - Basic programming concepts
+- **[GPIO Configuration](../Hardware_Fundamentals/GPIO_Configuration.md)** - Basic I/O setup
+- **[UART Configuration](../Communication_Protocols/UART_Configuration.md)** - Serial communication
+
+### **Next Steps**
+- **[Performance Profiling](../Debugging/Performance_Profiling.md)** - Detailed performance analysis
+- **[Memory Protection](./Memory_Protection.md)** - Debugging memory issues
+- **[Response Time Analysis](./Response_Time_Analysis.md)** - Analyzing timing problems
+
+---
+
+## 📋 **Quick Reference: Key Facts**
+
+### **Real-Time Debugging Fundamentals**
+- **Purpose**: Debug embedded systems without affecting real-time performance
+- **Types**: Non-intrusive monitoring, trace analysis, performance profiling
+- **Characteristics**: Minimal overhead, real-time compatible, comprehensive coverage
+- **Benefits**: Find timing-related bugs, maintain system reliability, optimize performance
+
+### **Debug Hooks and Monitoring**
+- **FreeRTOS Hooks**: Stack overflow, malloc failed, idle, tick hooks
+- **Non-Blocking Output**: Circular buffers, UART output, GPIO indicators
+- **Performance Counters**: Hardware counters, software timers, GPIO measurements
+- **Trace Collection**: Event logging, timing data, system state tracking
+
+### **Debugging Techniques**
+- **GPIO Debugging**: Visual indicators, timing measurements, state monitoring
+- **Trace Analysis**: Event correlation, timing analysis, pattern recognition
+- **Performance Profiling**: CPU usage, memory usage, timing analysis
+- **Error Handling**: Graceful degradation, error recovery, system stability
+
+### **Real-Time Considerations**
+- **Minimal Overhead**: Debug operations must not affect timing
+- **Non-Blocking**: All debug operations must be non-blocking
+- **Timing Preservation**: Debug system must preserve real-time guarantees
+- **Resource Efficiency**: Minimal memory and CPU usage for debug operations
 
 ---
 

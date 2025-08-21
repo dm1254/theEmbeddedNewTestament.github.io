@@ -2,6 +2,51 @@
 
 > **Comprehensive guide to implementing performance monitoring systems for CPU utilization, memory usage, and timing analysis in embedded real-time systems with FreeRTOS examples**
 
+## 🎯 **Concept → Why it matters → Minimal example → Try it → Takeaways**
+
+### **Concept**
+Performance monitoring is like having a dashboard in your car that shows you exactly how fast you're going, how much fuel you're using, and whether your engine is running smoothly. In embedded systems, it's your window into what's happening under the hood, helping you spot problems before they become critical.
+
+### **Why it matters**
+In real-time systems, performance issues can mean missed deadlines, system crashes, or even safety failures. Without monitoring, you're flying blind - you won't know if your system is running efficiently or if it's about to fail. Good monitoring gives you the data to make informed decisions and catch problems early.
+
+### **Minimal example**
+```c
+// Simple performance monitoring hooks
+void vApplicationIdleHook(void) {
+    static uint32_t idle_count = 0;
+    idle_count++;
+    
+    // Calculate CPU utilization every 1000 ticks
+    if (idle_count % 1000 == 0) {
+        uint32_t total_ticks = xTaskGetTickCount();
+        uint32_t cpu_util = 100 - ((idle_count * 100) / total_ticks);
+        
+        // Log or send CPU utilization data
+        log_performance_data("CPU_UTIL", cpu_util);
+    }
+}
+
+// Memory monitoring hook
+void vApplicationMallocFailedHook(void) {
+    // Log memory allocation failure
+    log_performance_data("MEMORY_FAIL", 1);
+    
+    // Take corrective action
+    perform_memory_cleanup();
+}
+```
+
+### **Try it**
+- **Experiment**: Add performance hooks to your FreeRTOS system and monitor CPU usage
+- **Challenge**: Implement a memory leak detector that tracks allocation patterns
+- **Debug**: Use GPIO to measure task execution times and identify bottlenecks
+
+### **Takeaways**
+Performance monitoring transforms reactive debugging into proactive optimization, giving you the data you need to build reliable, efficient embedded systems.
+
+---
+
 ## 📋 **Table of Contents**
 - [Overview](#overview)
 - [Performance Monitoring Fundamentals](#performance-monitoring-fundamentals)
@@ -819,6 +864,110 @@ void vPerformanceMonitoringTask(void *pvParameters) {
    - Implement escalation
    - Provide actionable alerts
    - Support multiple notification methods
+
+---
+
+## 🔬 **Guided Labs**
+
+### **Lab 1: CPU Utilization Monitoring**
+**Objective**: Implement basic CPU utilization monitoring in FreeRTOS
+**Steps**:
+1. Enable FreeRTOS hooks (idle hook, tick hook)
+2. Implement CPU utilization calculation
+3. Log or display utilization data
+4. Test under different load conditions
+
+**Expected Outcome**: Real-time CPU utilization data with minimal overhead
+
+### **Lab 2: Memory Usage Tracking**
+**Objective**: Monitor memory allocation and usage patterns
+**Steps**:
+1. Implement memory allocation tracking
+2. Monitor stack usage with high water marks
+3. Track heap fragmentation
+4. Detect memory leaks
+
+**Expected Outcome**: Complete visibility into memory usage patterns
+
+### **Lab 3: Performance Data Visualization**
+**Objective**: Create a simple performance dashboard
+**Steps**:
+1. Collect performance metrics in real-time
+2. Implement data storage (circular buffer)
+3. Create simple visualization (UART output, LCD)
+4. Add alerting for threshold violations
+
+**Expected Outcome**: Real-time performance dashboard with alerts
+
+---
+
+## ✅ **Check Yourself**
+
+### **Understanding Check**
+- [ ] Can you explain why performance monitoring is critical in real-time systems?
+- [ ] Do you understand the difference between CPU utilization and memory usage?
+- [ ] Can you identify what performance metrics are most important for your system?
+- [ ] Do you know how to implement basic performance hooks?
+
+### **Practical Skills Check**
+- [ ] Can you set up performance monitoring in FreeRTOS?
+- [ ] Do you know how to measure CPU utilization accurately?
+- [ ] Can you implement memory leak detection?
+- [ ] Do you understand how to minimize monitoring overhead?
+
+### **Advanced Concepts Check**
+- [ ] Can you explain the trade-offs in performance monitoring design?
+- [ ] Do you understand how to correlate different performance metrics?
+- [ ] Can you implement adaptive monitoring based on system load?
+- [ ] Do you know how to handle monitoring failures gracefully?
+
+---
+
+## 🔗 **Cross-links**
+
+### **Related Topics**
+- **[FreeRTOS Basics](./FreeRTOS_Basics.md)** - Understanding the RTOS context
+- **[Task Creation and Management](./Task_Creation_Management.md)** - Monitoring task performance
+- **[Scheduling Algorithms](./Scheduling_Algorithms.md)** - Understanding scheduling performance
+- **[Performance Profiling](../Debugging/Performance_Profiling.md)** - Detailed performance analysis
+
+### **Prerequisites**
+- **[C Language Fundamentals](../Embedded_C/C_Language_Fundamentals.md)** - Basic programming concepts
+- **[Memory Management](../Embedded_C/Memory_Management.md)** - Understanding memory concepts
+- **[GPIO Configuration](../Hardware_Fundamentals/GPIO_Configuration.md)** - Basic I/O setup
+
+### **Next Steps**
+- **[Real-Time Debugging](./Real_Time_Debugging.md)** - Using performance data for debugging
+- **[Power Management](./Power_Management.md)** - Monitoring power consumption
+- **[Response Time Analysis](./Response_Time_Analysis.md)** - Analyzing timing performance
+
+---
+
+## 📋 **Quick Reference: Key Facts**
+
+### **Performance Monitoring Fundamentals**
+- **Purpose**: Real-time visibility into system performance and resource usage
+- **Types**: CPU utilization, memory usage, timing analysis, power consumption
+- **Characteristics**: Real-time, non-intrusive, comprehensive, actionable
+- **Benefits**: Early problem detection, optimization guidance, reliability assurance
+
+### **CPU Performance Monitoring**
+- **Idle Time Monitoring**: Track system idle periods and calculate CPU busy percentage
+- **Task-Level Monitoring**: Individual task execution time and CPU usage
+- **Context Switch Monitoring**: Track task switching frequency and overhead
+- **Performance Counters**: Use hardware counters for precise timing measurements
+
+### **Memory Performance Monitoring**
+- **Stack Usage**: Monitor stack high water marks and overflow detection
+- **Heap Usage**: Track dynamic memory allocation and deallocation patterns
+- **Fragmentation**: Monitor memory fragmentation and allocation efficiency
+- **Memory Leaks**: Detect and track memory that's allocated but never freed
+
+### **Timing Performance Monitoring**
+- **Response Time**: Measure time from event to response completion
+- **Jitter Analysis**: Track timing variations and deadline compliance
+- **Deadline Monitoring**: Ensure tasks meet their timing requirements
+- **Latency Measurement**: Track end-to-end system response times
 
 ---
 

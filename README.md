@@ -200,11 +200,14 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 #### **Phase 3: Performance Optimization (6 weeks)**
 **Progression (concept clusters)**
 - **Code and Memory Optimization**
-  - [Code and Memory Optimization](./Performance_Optimization/Code_Memory_Optimization.md)
+  - [Code optimization techniques (algorithms, compiler flags)](./Performance_Optimization/Code_Optimization_Techniques.md)
+  - [Memory and cache-aware strategies](./Performance_Optimization/Memory_Cache_Strategies.md)
+  - [Power optimization](./Performance_Optimization/Power_Optimization.md)
 - **Profiling and Benchmarking**
-  - [Profiling and Benchmarking](./Performance_Optimization/Profiling_Benchmarking.md)
+  - [Performance profiling (function/memory)](./Performance_Optimization/Performance_Profiling.md)
+  - [Optimization tools (static/dynamic)](./Performance_Optimization/Optimization_Tools.md)
+  - [Benchmarking frameworks](./Performance_Optimization/Benchmarking_Frameworks.md)
 - **Data Structures & Algorithms**
-  - [Data Structures & Algorithms](./Performance_Optimization/Data_Structures_Algorithms.md)
   - **Fundamental Data Structures**
     - [Arrays and Bit Manipulation](./Data_Struct_Implementation/bitsArray/)
     - [Stacks and Queues](./Data_Struct_Implementation/stack/)
@@ -235,13 +238,13 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 #### **Operating Systems & Linux**
 - **Interrupts and Exceptions** - [Interrupt Fundamentals](./Operating_System/Interrupt.md), [ARM64 Exception Handling](./Operating_System/Exception_ARM64.md)
 - **Memory Management** - [Virtual Memory Concepts](./Operating_System/virtual_memory.md)
-- **Linux Kernel Programming** - Kernel modules, device drivers, system calls
-- **Process Management** - Process creation, scheduling, inter-process communication
-- **Device Drivers** - Character drivers, block drivers, network drivers
+- **Linux Kernel Programming** - [Kernel modules, device drivers, system calls](./Operating_System/Linux_Kernel_Programming.md)
+- **Process Management** - [Process creation, scheduling, inter-process communication](./Operating_System/Process_Management.md)
+- **Device Drivers** - [Character drivers, block drivers, network drivers](./Operating_System/Device_Drivers.md)
 - **System Programming** - POSIX APIs, system calls, signal handling
-- **Multi-threading** - pthread programming, thread synchronization
-- **Real-time Linux** - PREEMPT_RT, Xenomai, real-time extensions
-- **Embedded Linux** - Buildroot, Yocto, custom distributions
+    - **Multi-threading** - [pthread programming, thread synchronization](./Operating_System/Multi_threading.md)
+    - **Real-time Linux** - [PREEMPT_RT, Xenomai, real-time extensions](./Operating_System/Real_time_Linux.md)
+    - **Embedded Linux** - [Buildroot, Yocto, custom distributions](./Operating_System/Embedded_Linux.md)
 
 #### **Real-Time Systems & RTOS**
 - **FreeRTOS Fundamentals** - [FreeRTOS Basics](./Real_Time_Systems/FreeRTOS_Basics.md)
@@ -255,17 +258,17 @@ Explore → [Advanced Hardware](#advanced-hardware) → [Embedded Security](#emb
 - **Debugging** - [Real-Time Debugging](./Real_Time_Systems/Real_Time_Debugging.md)
 
 #### **Computer Architecture**
-- **ARM Architecture** - [ARM Programmer Model](./Computer_architecture/arm_programmer_model.md)
-- **Memory Systems** - [Translation Lookaside Buffer (TLB)](./Computer_architecture/tlb.md)
-- **Direct Memory Access** - [DMA Fundamentals](./Computer_architecture/dma.md)
-- **CPU Architecture** - ARM, x86, RISC-V, instruction sets
-- **Memory Hierarchy** - Cache levels, virtual memory, TLB
-- **Pipeline Architecture** - Instruction pipelining, hazards, forwarding
-- **Multi-core Systems** - Cache coherency, inter-core communication
-- **Vector Processing** - SIMD instructions, vectorization
-- **Floating Point** - IEEE 754, FPU programming, precision
-- **Memory Ordering** - Memory barriers, atomic operations
-- **Performance Counters** - CPU profiling, performance monitoring
+- **ARM Architecture** - [ARM Architecture](./Computer_architecture/ARM_Architecture.md)
+- **Memory Systems** - [Memory Systems](./Computer_architecture/Memory_Systems.md)
+- **Direct Memory Access** - [Direct Memory Access (DMA)](./Computer_architecture/Direct_Memory_Access.md)
+- **CPU Architecture** - [ARM, x86, RISC-V, instruction sets](./Computer_architecture/CPU_Architecture.md)
+                  - **Memory Hierarchy** - [Cache levels, virtual memory, TLB](./Computer_architecture/Memory_Hierarchy.md)
+                  - **Pipeline Architecture** - [Instruction pipelining, hazards, forwarding](./Computer_architecture/Pipeline_Architecture.md)
+                  - **Multi-core Systems** - [Cache coherency, inter-core communication](./Computer_architecture/Multi_core_Systems.md)
+                  - **Vector Processing** - [SIMD instructions, vectorization](./Computer_architecture/Vector_Processing.md)
+                  - **Floating Point** - [IEEE 754, FPU programming, precision](./Computer_architecture/Floating_Point.md)
+                  - **Memory Ordering** - [Memory barriers, atomic operations](./Computer_architecture/Memory_Ordering.md)
+                  - **Performance Counters** - [CPU profiling, performance monitoring](./Computer_architecture/Performance_Counters.md)
 
 #### **Embedded C Programming**
 - **Language Fundamentals** - [C Language Fundamentals](./Embedded_C/C_Language_Fundamentals.md)

@@ -1,7 +1,14 @@
 # Version Control Workflows
 
-## Overview
-Version control workflows are essential for managing embedded software development in team environments. This guide covers Git-based version control strategies, branching models, release management, and best practices that enable collaborative development while maintaining code quality and project stability.
+## Quick Reference: Key Facts
+- **Version control** tracks changes to source code, enabling collaboration and change history
+- **Git workflows** include centralized, feature branch, and GitFlow models for different team sizes
+- **Branching strategies** balance feature development with code stability and release management
+- **Commit messages** should be clear, descriptive, and follow established conventions
+- **Code review** ensures quality, knowledge sharing, and prevents bugs from reaching production
+- **Continuous Integration** automates testing and validation of code changes
+- **Release management** coordinates software releases with proper versioning and documentation
+- **Conflict resolution** handles merge conflicts through communication and systematic approaches
 
 ## Table of Contents
 1. [Core Concepts](#core-concepts)
@@ -15,7 +22,8 @@ Version control workflows are essential for managing embedded software developme
 9. [Best Practices](#best-practices)
 10. [Interview Questions](#interview-questions)
 
----
+## Overview
+Version control workflows are essential for managing source code changes in embedded system development. This guide covers Git-based workflows, branching strategies, code review processes, and continuous integration practices that enable teams to collaborate effectively while maintaining code quality and project stability.
 
 ## Core Concepts
 
@@ -364,546 +372,122 @@ git push origin --delete release/v1.2.0
 1.0.0+build.123    # Build number
 1.0.0+20130313144700 # Timestamp
 ```
-
-### Release Automation
-```bash
-#!/bin/bash
-# release.sh - Automated release script
-
-set -e
-
-# Configuration
-VERSION=$1
-RELEASE_BRANCH="release/v${VERSION}"
-DEVELOP_BRANCH="develop"
-MAIN_BRANCH="main"
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-# Functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Validate version format
-validate_version() {
-    if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        log_error "Invalid version format. Use MAJOR.MINOR.PATCH"
-        exit 1
-    fi
-}
-
-# Check working directory
-check_working_directory() {
-    if [[ -n $(git status --porcelain) ]]; then
-        log_error "Working directory is not clean"
-        git status
-        exit 1
-    fi
-}
-
-# Create release branch
-create_release_branch() {
-    log_info "Creating release branch: $RELEASE_BRANCH"
-    
-    git checkout $DEVELOP_BRANCH
-    git pull origin $DEVELOP_BRANCH
-    git checkout -b $RELEASE_BRANCH
-    
-    log_info "Release branch created successfully"
-}
-
-# Update version files
-update_version() {
-    log_info "Updating version to $VERSION"
-    
-    # Update version in source files
-    sed -i "s/VERSION_MAJOR [0-9]*/VERSION_MAJOR ${VERSION%%.*}/" src/version.h
-    sed -i "s/VERSION_MINOR [0-9]*/VERSION_MINOR ${VERSION%.*##*.}/" src/version.h
-    sed -i "s/VERSION_PATCH [0-9]*/VERSION_PATCH ${VERSION##*.}/" src/version.h
-    
-    # Update package.json if exists
-    if [[ -f package.json ]]; then
-        sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" package.json
-    fi
-    
-    # Update CMakeLists.txt if exists
-    if [[ -f CMakeLists.txt ]]; then
-        sed -i "s/PROJECT_VERSION [0-9.]*/PROJECT_VERSION $VERSION/" CMakeLists.txt
-    fi
-    
-    log_info "Version files updated"
-}
-
-# Commit release changes
-commit_release() {
-    log_info "Committing release changes"
-    
-    git add .
-    git commit -m "Prepare release v$VERSION"
-    
-    log_info "Release changes committed"
-}
-
-# Merge to main and tag
-merge_to_main() {
-    log_info "Merging to main branch"
-    
-    git checkout $MAIN_BRANCH
-    git pull origin $MAIN_BRANCH
-    git merge $RELEASE_BRANCH --no-ff -m "Merge release v$VERSION"
-    
-    # Create tag
-    git tag -a "v$VERSION" -m "Release version $VERSION"
-    
-    log_info "Release merged to main and tagged"
-}
-
-# Merge back to develop
-merge_to_develop() {
-    log_info "Merging back to develop"
-    
-    git checkout $DEVELOP_BRANCH
-    git merge $RELEASE_BRANCH --no-ff -m "Merge release v$VERSION back to develop"
-    
-    log_info "Release merged back to develop"
-}
-
-# Push changes
-push_changes() {
-    log_info "Pushing changes to remote"
-    
-    git push origin $MAIN_BRANCH
-    git push origin $DEVELOP_BRANCH
-    git push origin "v$VERSION"
-    
-    log_info "Changes pushed to remote"
-}
-
-# Cleanup
-cleanup() {
-    log_info "Cleaning up release branch"
-    
-    git branch -d $RELEASE_BRANCH
-    git push origin --delete $RELEASE_BRANCH
-    
-    log_info "Release branch deleted"
-}
-
-# Main release process
-main() {
-    log_info "Starting release process for version $VERSION"
-    
-    validate_version
-    check_working_directory
-    create_release_branch
-    update_version
-    commit_release
-    merge_to_main
-    merge_to_develop
-    push_changes
-    cleanup
-    
-    log_info "Release v$VERSION completed successfully!"
-    log_info "Don't forget to:"
-    log_info "1. Create release notes on GitHub/GitLab"
-    log_info "2. Notify team members"
-    log_info "3. Deploy to production"
-}
-
-# Run main function
-main "$@"
+Version Control Workflow Models
+┌─────────────────────────────────────────────────────────────┐
+│ Centralized Workflow                                        │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Main Branch Only                                         │ │
+│ │ ├── All developers work directly on main                │ │
+│ │ ├── Simple but limited collaboration                     │ │
+│ │ └── Suitable for small teams                            │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Feature Branch Workflow                                     │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Main + Feature Branches                                  │ │
+│ │ ├── Features developed in separate branches              │ │
+│ │ ├── Pull requests for code review                       │ │
+│ │ └── Good for medium-sized teams                         │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ GitFlow Workflow                                            │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Main + Develop + Feature + Release + Hotfix            │ │
+│ │ ├── Structured release management                       │ │
+│ │ ├── Clear separation of concerns                        │ │
+│ │ └── Suitable for large teams and projects               │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## Code Review Process
-
-### Review Guidelines
-```markdown
-# Code Review Guidelines
-
-## Review Checklist
-
-### Functionality
-- [ ] Does the code do what it's supposed to do?
-- [ ] Are edge cases handled properly?
-- [ ] Is error handling appropriate?
-- [ ] Are there any security implications?
-
-### Code Quality
-- [ ] Is the code readable and maintainable?
-- [ ] Are variable names descriptive?
-- [ ] Is the code properly documented?
-- [ ] Are there any code smells or anti-patterns?
-
-### Performance
-- [ ] Are there any performance issues?
-- [ ] Is memory usage appropriate?
-- [ ] Are algorithms efficient?
-- [ ] Are there any unnecessary operations?
-
-### Testing
-- [ ] Are there adequate tests?
-- [ ] Do all tests pass?
-- [ ] Is test coverage sufficient?
-- [ ] Are edge cases tested?
-
-### Documentation
-- [ ] Is the code self-documenting?
-- [ ] Are complex algorithms explained?
-- [ ] Are API changes documented?
-- [ ] Are README files updated?
-
-## Review Process
-
-1. **Initial Review**: Check for obvious issues
-2. **Detailed Review**: Examine code logic and implementation
-3. **Testing**: Verify functionality and test coverage
-4. **Documentation**: Ensure documentation is complete
-5. **Final Approval**: Approve or request changes
+### Branching Strategy
+```
+Git Branching Strategy
+┌─────────────────────────────────────────────────────────────┐
+│ Main Branch (Production)                                    │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Stable, tested code                                      │ │
+│ │ Tagged releases (v1.0.0, v1.1.0, etc.)                 │ │
+│ │ Hotfix branches for critical issues                     │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Develop Branch (Integration)                               │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Feature integration                                      │ │
+│ │ Pre-release testing                                      │ │
+│ │ Release branch creation                                  │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Feature Branches (Development)                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Individual features                                      │ │
+│ │ Bug fixes                                                │ │
+│ │ Experimental work                                        │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Automated Review Tools
-```yaml
-# .github/workflows/code-review.yml
-name: Code Review
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  code-quality:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Run static analysis
-      run: |
-        # Install static analysis tools
-        sudo apt update
-        sudo apt install cppcheck clang-tidy
-        
-        # Run Cppcheck
-        cppcheck --enable=all --error-exitcode=1 src/
-        
-        # Run Clang-tidy
-        clang-tidy --checks=* src/*.c -- -Iinclude/
-    
-    - name: Check code formatting
-      run: |
-        # Check if code follows style guidelines
-        find src/ -name "*.c" -exec clang-format --dry-run {} \;
-    
-    - name: Run unit tests
-      run: |
-        # Build and run tests
-        make test
-        
-    - name: Check code coverage
-      run: |
-        # Generate coverage report
-        make coverage
-        
-        # Check minimum coverage threshold
-        coverage_threshold=80
-        current_coverage=$(cat coverage/coverage.txt | grep "TOTAL" | awk '{print $4}' | sed 's/%//')
-        
-        if (( $(echo "$current_coverage < $coverage_threshold" | bc -l) )); then
-          echo "Code coverage ($current_coverage%) is below threshold ($coverage_threshold%)"
-          exit 1
-        fi
+### Code Review Process
+```
+Code Review Workflow
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Developer   │───▶│ Create      │───▶│ Code       │
+│ Creates     │    │ Pull        │    │ Review     │
+│ Feature     │    │ Request     │    │ Process    │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       │                   │                   │
+       ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ Feature     │    │ Automated   │    │ Reviewer    │
+│ Branch      │    │ Checks      │    │ Feedback    │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                                    │
+                                                    ▼
+                                            ┌─────────────┐
+                                            │ Address    │
+                                            │ Feedback   │
+                                            └─────────────┘
+                                                    │
+                                                    ▼
+                                            ┌─────────────┐
+                                            │ Merge      │
+                                            │ Approved   │
+                                            └─────────────┘
 ```
 
----
-
-## Continuous Integration
-
-### CI/CD Pipeline
-```yaml
-# .github/workflows/ci-cd.yml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        target: [stm32f4, stm32f7, stm32h7]
-        config: [debug, release]
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install gcc-arm-none-eabi gdb-arm-none-eabi cmake make
-    
-    - name: Configure build
-      run: |
-        cmake -B build \
-              -DCMAKE_BUILD_TYPE=${{ matrix.config }} \
-              -DCURRENT_TARGET=${{ matrix.target }}
-    
-    - name: Build project
-      run: cmake --build build --parallel
-    
-    - name: Run tests
-      run: |
-        cd build
-        ctest --output-on-failure
-    
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.target }}-${{ matrix.config }}
-        path: build/*.bin
-        retention-days: 30
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Download artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: stm32f4-release
-    
-    - name: Deploy to production
-      run: |
-        echo "Deploying to production..."
-        # Add deployment commands here
+### Continuous Integration Pipeline
 ```
-
-### Automated Testing
-```bash
-#!/bin/bash
-# run_tests.sh - Automated testing script
-
-set -e
-
-# Configuration
-BUILD_DIR="build"
-TEST_DIR="tests"
-COVERAGE_DIR="coverage"
-COVERAGE_THRESHOLD=80
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-# Functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Run unit tests
-run_unit_tests() {
-    log_info "Running unit tests..."
-    
-    if [[ -d "$BUILD_DIR" ]]; then
-        cd "$BUILD_DIR"
-        
-        # Run CTest
-        if command -v ctest &> /dev/null; then
-            ctest --output-on-failure --parallel
-            log_info "Unit tests completed"
-        else
-            log_warning "CTest not available"
-        fi
-        
-        cd ..
-    else
-        log_error "Build directory not found"
-        exit 1
-    fi
-}
-
-# Run integration tests
-run_integration_tests() {
-    log_info "Running integration tests..."
-    
-    if [[ -d "$TEST_DIR/integration" ]]; then
-        cd "$TEST_DIR/integration"
-        
-        # Run integration test scripts
-        for test_script in *.sh; do
-            if [[ -f "$test_script" ]]; then
-                log_info "Running $test_script"
-                bash "$test_script"
-            fi
-        done
-        
-        cd ../..
-        log_info "Integration tests completed"
-    else
-        log_warning "Integration test directory not found"
-    fi
-}
-
-# Generate coverage report
-generate_coverage() {
-    log_info "Generating coverage report..."
-    
-    if [[ -d "$BUILD_DIR" ]]; then
-        cd "$BUILD_DIR"
-        
-        # Generate coverage data
-        if command -v gcov &> /dev/null; then
-            make coverage
-            
-            # Check coverage threshold
-            if [[ -f "coverage/coverage.txt" ]]; then
-                current_coverage=$(cat coverage/coverage.txt | grep "TOTAL" | awk '{print $4}' | sed 's/%//')
-                
-                log_info "Current coverage: ${current_coverage}%"
-                
-                if (( $(echo "$current_coverage < $COVERAGE_THRESHOLD" | bc -l) )); then
-                    log_warning "Coverage is below threshold ($COVERAGE_THRESHOLD%)"
-                else
-                    log_info "Coverage meets threshold requirement"
-                fi
-            fi
-        else
-            log_warning "GCOV not available"
-        fi
-        
-        cd ..
-    fi
-}
-
-# Run static analysis
-run_static_analysis() {
-    log_info "Running static analysis..."
-    
-    # Run Cppcheck
-    if command -v cppcheck &> /dev/null; then
-        cppcheck --enable=all --error-exitcode=1 src/ 2>&1 | tee static_analysis.log
-        log_info "Static analysis completed"
-    else
-        log_warning "Cppcheck not available"
-    fi
-    
-    # Run Clang-tidy
-    if command -v clang-tidy &> /dev/null; then
-        find src/ -name "*.c" -exec clang-tidy --checks=* {} \; 2>&1 | tee clang_tidy.log
-        log_info "Clang-tidy analysis completed"
-    else
-        log_warning "Clang-tidy not available"
-    fi
-}
-
-# Main testing process
-main() {
-    log_info "Starting automated testing process..."
-    
-    run_unit_tests
-    run_integration_tests
-    generate_coverage
-    run_static_analysis
-    
-    log_info "All tests completed successfully!"
-}
-
-# Run main function
-main "$@"
-```
-
----
-
-## Common Issues and Solutions
-
-### Merge Conflicts
-```bash
-# Resolving complex merge conflicts
-# 1. Abort merge if needed
-git merge --abort
-
-# 2. Start fresh
-git checkout main
-git pull origin main
-git checkout feature-branch
-git rebase main
-
-# 3. Resolve conflicts during rebase
-# Edit conflicted files
-git add <resolved-file>
-git rebase --continue
-
-# 4. Force push if needed (use with caution)
-git push origin feature-branch --force-with-lease
-```
-
-### Large File Management
-```bash
-# Git LFS for large files
-# Install Git LFS
-git lfs install
-
-# Track large file types
-git lfs track "*.bin"
-git lfs track "*.hex"
-git lfs track "*.elf"
-git lfs track "*.map"
-
-# Add .gitattributes
-git add .gitattributes
-
-# Commit and push
-git commit -m "Configure Git LFS for binary files"
-git push origin main
-```
-
-### Repository Maintenance
-```bash
-# Clean up repository
-# Remove old branches
-git remote prune origin
-git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
-
-# Clean up tags
-git tag -l | xargs git tag -d
-git fetch --tags
-
-# Optimize repository
-git gc --aggressive --prune=now
-git repack -a -d --depth=250 --window=250
+CI/CD Pipeline
+┌─────────────────────────────────────────────────────────────┐
+│ Code Commit                                                 │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Push to feature branch                                  │ │
+│ │ Create pull request                                     │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Automated Testing                                          │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Code quality checks                                     │ │
+│ │ Unit tests                                              │ │
+│ │ Integration tests                                       │ │
+│ │ Build verification                                      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Code Review                                                │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Manual review                                           │ │
+│ │ Automated checks pass                                   │ │
+│ │ Approval from reviewers                                 │ │
+│ └─────────────────────────────────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│ Merge and Deploy                                           │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Merge to develop/main                                   │ │
+│ │ Automated deployment                                    │ │
+│ │ Post-deployment tests                                   │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -964,26 +548,34 @@ git repack -a -d --depth=250 --window=250
 3. **How do you implement continuous integration?**
    - Automated builds, testing, deployment pipelines
 
-### Advanced Level
-1. **How would you scale version control for large teams?**
-   - Repository organization, access control, automation
+### Understanding Check
+- [ ] Can you explain the differences between Git workflow models?
+- [ ] Do you understand when to use different branching strategies?
+- [ ] Can you describe the code review process and its benefits?
+- [ ] Do you know how to implement continuous integration?
 
-2. **What are the security considerations in version control?**
-   - Access control, secret management, audit trails
+### Application Check
+- [ ] Can you set up a Git repository with proper branching?
+- [ ] Can you create meaningful commit messages following standards?
+- [ ] Can you implement a code review process for your team?
+- [ ] Can you configure CI/CD pipelines for automated testing?
 
-3. **How do you implement deployment automation?**
-   - CI/CD pipelines, environment management, rollback strategies
+### Analysis Check
+- [ ] Can you analyze Git history to understand code evolution?
+- [ ] Can you optimize branching strategies for your team size?
+- [ ] Can you measure and improve code review effectiveness?
+- [ ] Can you troubleshoot CI/CD pipeline issues?
 
-### Practical Coding Questions
-1. **Set up a Git repository with branching strategy**
-2. **Implement automated release process**
-3. **Create CI/CD pipeline configuration**
-4. **Design code review workflow**
-5. **Implement deployment automation**
+## Cross-links
 
----
+- **[Build Systems](./Build_Systems.md)** - Integration with build automation
+- **[System Integration](../System_Integration/Build_Systems.md)** - Development workflow integration
+- **[Error Handling and Logging](./Error_Handling_Logging.md)** - Version control for error tracking
+- **[Performance Optimization](../Performance_Optimization/Code_Optimization_Techniques.md)** - Version control for optimization tracking
+- **[Real-Time Systems](../Real_Time_Systems/Real_Time_Debugging.md)** - Version control for debugging workflows
 
-## Summary
+## Conclusion
+
 Version control workflows are essential for successful embedded software development. A well-designed workflow provides:
 
 - **Collaboration**: Enable team development and code sharing

@@ -8,16 +8,12 @@
 ## 📋 **Table of Contents**
 
 - [Overview](#overview)
-- [Reset Types](#reset-types)
-- [Reset Sources](#reset-sources)
-- [Reset Configuration](#reset-configuration)
-- [Reset Detection](#reset-detection)
-- [System Initialization](#system-initialization)
-- [Reset Recovery](#reset-recovery)
-- [Best Practices](#best-practices)
-- [Common Pitfalls](#common-pitfalls)
-- [Examples](#examples)
-- [Interview Questions](#interview-questions)
+- [Quick Reference: Key Facts](#quick-reference-key-facts)
+- [Visual Understanding](#visual-understanding)
+- [Conceptual Foundation](#conceptual-foundation)
+- [Core Concepts](#core-concepts)
+- [Practical Considerations](#practical-considerations)
+- [Additional Resources](#additional-resources)
 
 ---
 
@@ -25,599 +21,254 @@
 
 Reset management is crucial for embedded systems to ensure reliable startup, handle system failures, and maintain system integrity. Understanding reset mechanisms helps design robust systems that can recover from various failure conditions.
 
-### Concept: Know every reset cause and make resets informative
+---
 
-Track POR, BOR, watchdog, software reset, and pin reset. Preserve reset reason across boot and expose it for diagnostics.
+## 🚀 **Quick Reference: Key Facts**
 
-### Minimal example
-```c
-uint32_t reset_reason_read(void){ return RCC->CSR & REASON_MASK; }
-void reset_reason_clear(void){ RCC->CSR |= RCC_CSR_RMVF; }
-```
-
-### Takeaways
-- Clear flags early; log to non-volatile memory if needed.
-- Define a boot flow that handles partial initialization after soft resets.
-- Provide a user-visible diagnostic (LED pattern, log) of reset cause.
+- **Reset Sources**: Power-on, watchdog, software, external pin, brownout, lockup
+- **Reset Detection**: Check RCC->CSR register flags to identify reset cause
+- **Reset Timing**: Power stabilization delays, debouncing, initialization sequences
+- **Reset Recovery**: Different strategies for different reset types
+- **Reset Logging**: Preserve reset reason for diagnostics and debugging
+- **System Initialization**: Proper startup sequence after any reset event
 
 ---
 
-## 🧪 Guided Labs
-1) Reset cause logging
-- Implement a system that logs and displays the cause of the last reset.
+## 🔍 **Visual Understanding**
 
-2) Reset flag handling
-- Test different reset scenarios and verify flag handling.
+### **Reset Event Timeline**
+```
+Power Applied → Voltage Stabilization → Reset Release → System Initialization → Application Start
+     ↓                ↓                    ↓              ↓                    ↓
+   POR Event    Power Good Check    Reset Deassert   Clock Setup        Main Loop
+```
 
-## ✅ Check Yourself
-- How do you distinguish between different types of resets?
-- When should you use a soft reset vs a hard reset?
+### **Reset Source Hierarchy**
+```
+Reset Sources
+     ↓
+┌─────────────┬─────────────┬─────────────┬─────────────┐
+│   Power-On  │  Watchdog   │  Software   │  External   │
+│    Reset    │   Reset     │   Reset     │   Reset     │
+└─────────────┴─────────────┴─────────────┴─────────────┘
+     ↓              ↓              ↓              ↓
+Full System    System Health   Controlled    Manual Reset
+Initialization   Recovery      Restart       Trigger
+```
 
-## 🔗 Cross-links
-- `Hardware_Fundamentals/Watchdog_Timers.md` for watchdog resets
-- `Embedded_C/Type_Qualifiers.md` for volatile access
-
-### **Key Concepts**
-- **Reset Sources** - Different conditions that trigger system reset
-- **Reset Configuration** - Setting up reset behavior and timing
-- **System Initialization** - Proper startup sequence after reset
-- **Reset Recovery** - Handling different reset scenarios
+### **Reset Recovery Flow**
+```
+Reset Occurs → Detect Source → Check System Health → Choose Recovery → Initialize → Resume
+     ↓              ↓              ↓                ↓            ↓          ↓
+  Hardware      Read Flags    Validate State   Warm/Cold    Setup HW    Continue
+  Event         Identify      Check Memory     Reset        Configure   Operation
+```
 
 ---
 
-## 🔄 **Reset Types**
+## 🧠 **Conceptual Foundation**
 
-### **1. Power-On Reset (POR)**
-Triggered when power is first applied to the system.
+### **The Reset Management Philosophy**
+Reset management represents a fundamental principle in embedded systems: **graceful degradation and recovery**. Instead of allowing a system to fail completely, reset mechanisms provide controlled ways to recover from various failure conditions. This philosophy enables:
+- **System Reliability**: Recovery from transient faults and errors
+- **Fault Tolerance**: Continued operation despite hardware or software issues
+- **Maintenance Efficiency**: Clear identification of system problems
+- **User Experience**: Seamless recovery without manual intervention
 
+### **Why Reset Management Matters**
+Reset management is critical because embedded systems operate in unpredictable environments where failures are inevitable. Proper reset management enables:
+- **Predictable Startup**: Consistent system behavior after any reset event
+- **Fault Diagnosis**: Clear identification of what caused the reset
+- **System Recovery**: Appropriate recovery strategies for different failure types
+- **Data Protection**: Preservation of critical information across resets
+
+### **The Reset Design Challenge**
+Designing reset management systems involves balancing several competing concerns:
+- **Speed vs. Reliability**: Faster startup vs. thorough initialization
+- **Simplicity vs. Robustness**: Simple reset logic vs. comprehensive error handling
+- **Memory vs. Performance**: Preserving state vs. clean slate approach
+- **User Control vs. Safety**: Manual reset capability vs. preventing accidental resets
+
+---
+
+## 🎯 **Core Concepts**
+
+### **Concept: Reset Source Detection and Classification**
+
+**Why it matters**: Knowing why a reset occurred is crucial for proper system recovery. Different reset sources require different handling strategies, and proper detection enables intelligent recovery decisions.
+
+**Minimal example**
 ```c
-// Power-on reset configuration
-typedef struct {
-    uint32_t por_delay_ms;      // Delay before system startup
-    bool por_voltage_monitor;    // Enable voltage monitoring
-    float por_voltage_threshold; // Minimum voltage threshold
-    bool por_brownout_detect;    // Enable brownout detection
-} por_config_t;
-
-// Power-on reset status
-typedef struct {
-    bool por_occurred;           // POR flag
-    uint32_t por_timestamp;      // When POR occurred
-    float por_voltage;           // Voltage at POR
-    uint8_t por_source;          // POR source (main, backup, etc.)
-} por_status_t;
-```
-
-### **2. Watchdog Reset**
-Triggered by watchdog timer timeout.
-
-```c
-// Watchdog reset configuration
-typedef struct {
-    uint32_t wdt_timeout_ms;     // Watchdog timeout period
-    bool wdt_enabled;            // Enable watchdog
-    bool wdt_window_mode;        // Enable window mode
-    uint32_t wdt_window_start;   // Window start time
-    uint32_t wdt_window_end;     // Window end time
-} wdt_reset_config_t;
-
-// Watchdog reset status
-typedef struct {
-    bool wdt_reset_occurred;     // WDT reset flag
-    uint32_t wdt_reset_count;    // Number of WDT resets
-    uint32_t last_wdt_feed;      // Last watchdog feed time
-    uint8_t wdt_reset_source;    // WDT reset source
-} wdt_reset_status_t;
-```
-
-### **3. Software Reset**
-Triggered by software command or system request.
-
-```c
-// Software reset types
+// Basic reset source detection
 typedef enum {
-    SW_RESET_SYSTEM,            // Full system reset
-    SW_RESET_PERIPHERAL,        // Peripheral reset only
-    SW_RESET_WARM,              // Warm reset (preserve some state)
-    SW_RESET_COLD               // Cold reset (full initialization)
-} software_reset_type_t;
-
-// Software reset configuration
-typedef struct {
-    software_reset_type_t reset_type;
-    bool preserve_memory;        // Preserve memory contents
-    bool preserve_registers;     // Preserve register state
-    uint32_t reset_delay_ms;     // Delay before reset
-} sw_reset_config_t;
-```
-
-### **4. External Reset**
-Triggered by external signal or hardware.
-
-```c
-// External reset configuration
-typedef struct {
-    uint8_t reset_pin;          // Reset pin number
-    bool reset_pin_active_low;  // Active low reset pin
-    uint32_t reset_debounce_ms; // Debounce time
-    bool reset_pin_pullup;      // Enable pull-up resistor
-} external_reset_config_t;
-
-// External reset status
-typedef struct {
-    bool ext_reset_occurred;     // External reset flag
-    uint32_t ext_reset_count;    // Number of external resets
-    uint32_t last_ext_reset;     // Last external reset time
-} external_reset_status_t;
-```
-
----
-
-## 🎯 **Reset Sources**
-
-### **1. Hardware Reset Sources**
-
-```c
-// Hardware reset sources
-typedef enum {
-    RESET_SOURCE_POR,           // Power-on reset
-    RESET_SOURCE_PIN,           // Reset pin
-    RESET_SOURCE_WDT,           // Watchdog timer
-    RESET_SOURCE_BOD,           // Brownout detector
-    RESET_SOURCE_LOCKUP,        // Lockup reset
-    RESET_SOURCE_SYSRESET,      // System reset request
-    RESET_SOURCE_SOFTWARE,      // Software reset
-    RESET_SOURCE_UNKNOWN        // Unknown reset source
+    RESET_SOURCE_POR,      // Power-on reset
+    RESET_SOURCE_WDT,      // Watchdog timeout
+    RESET_SOURCE_SOFTWARE, // Software initiated
+    RESET_SOURCE_EXTERNAL, // External pin
+    RESET_SOURCE_UNKNOWN   // Unknown cause
 } reset_source_t;
 
-// Reset source detection
+// Detect reset source from hardware flags
 reset_source_t detect_reset_source(void) {
     uint32_t reset_flags = RCC->CSR;
     
     if (reset_flags & RCC_CSR_PORRSTF) {
         return RESET_SOURCE_POR;
-    } else if (reset_flags & RCC_CSR_PINRSTF) {
-        return RESET_SOURCE_PIN;
     } else if (reset_flags & RCC_CSR_WWDGRSTF) {
         return RESET_SOURCE_WDT;
-    } else if (reset_flags & RCC_CSR_BORRSTF) {
-        return RESET_SOURCE_BOD;
     } else if (reset_flags & RCC_CSR_SFTRSTF) {
         return RESET_SOURCE_SOFTWARE;
-    } else {
-        return RESET_SOURCE_UNKNOWN;
+    } else if (reset_flags & RCC_CSR_PINRSTF) {
+        return RESET_SOURCE_EXTERNAL;
     }
+    
+    return RESET_SOURCE_UNKNOWN;
 }
 ```
 
-### **2. Reset Source Configuration**
+**Try it**: Implement reset source detection for your specific microcontroller and test with different reset scenarios.
 
+**Takeaways**
+- Always check reset flags early in system initialization
+- Different reset sources require different recovery strategies
+- Log reset source for debugging and diagnostics
+- Clear reset flags after detection
+
+### **Concept: Reset Timing and Power Stabilization**
+
+**Why it matters**: Proper reset timing ensures reliable system startup. Power supply stabilization, clock settling, and peripheral initialization all require specific timing considerations to prevent startup failures.
+
+**Minimal example**
 ```c
-// Configure reset sources
-void configure_reset_sources(void) {
-    // Enable brownout detector
-    PWR->CR |= PWR_CR_BODEN;
-    
-    // Configure reset pin
-    GPIO_InitTypeDef gpio_init = {0};
-    gpio_init.Pin = RESET_PIN;
-    gpio_init.Mode = GPIO_MODE_INPUT;
-    gpio_init.Pull = GPIO_PULLUP;
-    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(RESET_PORT, &gpio_init);
-    
-    // Enable reset pin interrupt
-    HAL_NVIC_SetPriority(RESET_PIN_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(RESET_PIN_IRQn);
-}
-```
-
----
-
-## ⚙️ **Reset Configuration**
-
-### **1. Reset Timing Configuration**
-
-```c
-// Reset timing configuration
+// Basic reset timing configuration
 typedef struct {
-    uint32_t por_delay_ms;      // Power-on reset delay
-    uint32_t reset_debounce_ms; // Reset pin debounce
-    uint32_t wdt_timeout_ms;    // Watchdog timeout
-    uint32_t brownout_delay_ms; // Brownout detection delay
-} reset_timing_config_t;
+    uint32_t power_stabilization_ms;  // Power supply settling time
+    uint32_t clock_settling_ms;       // Clock oscillator stabilization
+    uint32_t peripheral_init_ms;      // Peripheral initialization time
+    uint32_t total_startup_ms;        // Total startup time
+} reset_timing_t;
 
-// Configure reset timing
-void configure_reset_timing(reset_timing_config_t *config) {
-    // Configure power-on reset delay
-    if (config->por_delay_ms > 0) {
-        // Set POR delay timer
-        TIM_HandleTypeDef htim_por;
-        htim_por.Instance = TIM2;
-        htim_por.Init.Prescaler = 8399; // 84MHz / 8400 = 10kHz
-        htim_por.Init.Period = config->por_delay_ms * 10;
-        HAL_TIM_Base_Init(&htim_por);
-    }
+// Configure reset timing delays
+void configure_reset_timing(reset_timing_t *timing) {
+    // Set power stabilization delay
+    timing->power_stabilization_ms = 100;  // 100ms for power to settle
     
-    // Configure watchdog timeout
-    if (config->wdt_timeout_ms > 0) {
-        IWDG_HandleTypeDef hiwdg;
-        hiwdg.Instance = IWDG;
-        hiwdg.Init.Prescaler = IWDG_PRESCALER_256;
-        hiwdg.Init.Reload = (config->wdt_timeout_ms * 40000) / 256;
-        HAL_IWDG_Init(&hiwdg);
-    }
+    // Set clock settling time
+    timing->clock_settling_ms = 50;        // 50ms for oscillator
+    
+    // Calculate total startup time
+    timing->total_startup_ms = timing->power_stabilization_ms + 
+                               timing->clock_settling_ms + 
+                               timing->peripheral_init_ms;
 }
 ```
 
-### **2. Reset Behavior Configuration**
+**Try it**: Measure your system's actual power-up time and adjust timing parameters accordingly.
 
+**Takeaways**
+- Power supply needs time to stabilize before system startup
+- Clock oscillators require settling time for stable operation
+- Different peripherals may need different initialization timing
+- Test timing under various power supply conditions
+
+### **Concept: Reset Recovery Strategies and State Management**
+
+**Why it matters**: Different reset scenarios require different recovery approaches. Understanding what state can be preserved and what must be reinitialized enables efficient recovery and maintains system integrity.
+
+**Minimal example**
 ```c
-// Reset behavior configuration
-typedef struct {
-    bool preserve_ram;          // Preserve RAM contents
-    bool preserve_registers;    // Preserve register state
-    bool preserve_peripherals;  // Preserve peripheral state
-    bool clear_flags;           // Clear reset flags
-    bool enable_debug;          // Enable debug after reset
-} reset_behavior_config_t;
+// Reset recovery strategy selection
+typedef enum {
+    RECOVERY_COLD_START,   // Full system reinitialization
+    RECOVERY_WARM_START,   // Partial reinitialization
+    RECOVERY_HOT_START     // Minimal reinitialization
+} recovery_strategy_t;
 
-// Configure reset behavior
-void configure_reset_behavior(reset_behavior_config_t *config) {
-    if (config->preserve_ram) {
-        // Configure RAM retention
-        PWR->CR |= PWR_CR_DBP;
-        RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-    }
-    
-    if (config->clear_flags) {
-        // Clear reset flags
-        RCC->CSR |= RCC_CSR_RMVF;
-    }
-    
-    if (config->enable_debug) {
-        // Enable debug after reset
-        DBGMCU->CR |= DBGMCU_CR_DBG_SLEEP | DBGMCU_CR_DBG_STOP | DBGMCU_CR_DBG_STANDBY;
-    }
-}
-```
-
----
-
-## 🔍 **Reset Detection**
-
-### **1. Reset Flag Detection**
-
-```c
-// Reset flag structure
-typedef struct {
-    bool por_flag;              // Power-on reset flag
-    bool pin_flag;              // Reset pin flag
-    bool wdt_flag;              // Watchdog reset flag
-    bool bod_flag;              // Brownout reset flag
-    bool software_flag;         // Software reset flag
-    bool lockup_flag;           // Lockup reset flag
-    uint32_t reset_count;       // Total reset count
-} reset_flags_t;
-
-// Detect reset flags
-reset_flags_t detect_reset_flags(void) {
-    reset_flags_t flags = {0};
-    uint32_t reset_flags = RCC->CSR;
-    
-    flags.por_flag = (reset_flags & RCC_CSR_PORRSTF) != 0;
-    flags.pin_flag = (reset_flags & RCC_CSR_PINRSTF) != 0;
-    flags.wdt_flag = (reset_flags & RCC_CSR_WWDGRSTF) != 0;
-    flags.bod_flag = (reset_flags & RCC_CSR_BORRSTF) != 0;
-    flags.software_flag = (reset_flags & RCC_CSR_SFTRSTF) != 0;
-    flags.lockup_flag = (reset_flags & RCC_CSR_LOCKUPRSTF) != 0;
-    
-    return flags;
-}
-```
-
-### **2. Reset Source Logging**
-
-```c
-// Reset log entry
-typedef struct {
-    reset_source_t source;      // Reset source
-    uint32_t timestamp;         // Reset timestamp
-    uint32_t reset_count;       // Reset count
-    uint8_t additional_info[16]; // Additional information
-} reset_log_entry_t;
-
-// Log reset event
-void log_reset_event(reset_source_t source) {
-    reset_log_entry_t log_entry;
-    log_entry.source = source;
-    log_entry.timestamp = HAL_GetTick();
-    log_entry.reset_count = get_reset_count() + 1;
-    
-    // Store in non-volatile memory
-    store_reset_log(&log_entry);
-}
-```
-
----
-
-## 🚀 **System Initialization**
-
-### **1. Reset Handler**
-
-```c
-// Reset handler
-void reset_handler(void) {
-    // Clear reset flags
-    RCC->CSR |= RCC_CSR_RMVF;
-    
-    // Initialize system
-    system_init();
-    
-    // Jump to main application
-    main();
-}
-
-// System initialization
-void system_init(void) {
-    // Initialize clock system
-    clock_init();
-    
-    // Initialize GPIO
-    gpio_init();
-    
-    // Initialize peripherals
-    peripheral_init();
-    
-    // Initialize watchdog
-    watchdog_init();
-    
-    // Initialize reset management
-    reset_management_init();
-}
-```
-
-### **2. Post-Reset Initialization**
-
-```c
-// Post-reset initialization
-void post_reset_init(void) {
-    reset_source_t source = detect_reset_source();
-    
+// Choose recovery strategy based on reset source
+recovery_strategy_t select_recovery_strategy(reset_source_t source) {
     switch (source) {
         case RESET_SOURCE_POR:
-            // Full system initialization
-            full_system_init();
-            break;
-            
-        case RESET_SOURCE_WDT:
-            // Recover from watchdog reset
-            watchdog_recovery();
-            break;
+            return RECOVERY_COLD_START;  // Full initialization needed
             
         case RESET_SOURCE_SOFTWARE:
-            // Software reset recovery
-            software_reset_recovery();
-            break;
+            return RECOVERY_WARM_START;  // Partial initialization
+            
+        case RESET_SOURCE_WDT:
+            return RECOVERY_HOT_START;   // Minimal initialization
             
         default:
-            // Unknown reset source
-            unknown_reset_recovery();
-            break;
+            return RECOVERY_COLD_START;  // Default to safe option
     }
 }
 ```
+
+**Try it**: Implement different recovery strategies and test system behavior after various reset types.
+
+**Takeaways**
+- Power-on resets require full system initialization
+- Software resets can preserve some system state
+- Watchdog resets may only need minimal recovery
+- Always validate system state after recovery
 
 ---
 
-## 🔄 **Reset Recovery**
+## 🧪 **Guided Labs**
 
-### **1. Watchdog Reset Recovery**
+### **Lab 1: Reset Source Detection and Logging**
+**Objective**: Implement a system that detects and logs different reset sources.
 
-```c
-// Watchdog reset recovery
-void watchdog_recovery(void) {
-    // Check system health
-    if (check_system_health()) {
-        // System is healthy, continue normal operation
-        log_system_event("WDT reset - system recovered");
-    } else {
-        // System is unhealthy, perform recovery
-        perform_system_recovery();
-    }
-    
-    // Reset watchdog
-    feed_watchdog();
-}
+**Steps**:
+1. Set up reset source detection using hardware flags
+2. Implement reset logging to non-volatile memory
+3. Test different reset scenarios (power cycle, watchdog, software)
+4. Verify reset source identification accuracy
 
-// System health check
-bool check_system_health(void) {
-    // Check critical system parameters
-    if (check_voltage_levels() && check_temperature() && check_memory_integrity()) {
-        return true;
-    }
-    return false;
-}
-```
+**Expected Outcome**: Understanding of reset detection mechanisms and proper flag handling.
 
-### **2. Software Reset Recovery**
+### **Lab 2: Reset Timing and Power-Up Sequence**
+**Objective**: Measure and optimize system startup timing.
 
-```c
-// Software reset recovery
-void software_reset_recovery(void) {
-    // Restore system state if needed
-    if (was_state_preserved()) {
-        restore_system_state();
-    }
-    
-    // Reinitialize necessary components
-    reinitialize_components();
-    
-    // Continue normal operation
-    log_system_event("Software reset - recovery completed");
-}
-```
+**Steps**:
+1. Measure actual power-up time with oscilloscope
+2. Implement configurable startup delays
+3. Test startup under various power supply conditions
+4. Optimize timing for reliable operation
+
+**Expected Outcome**: Practical experience with reset timing and power supply considerations.
+
+### **Lab 3: Reset Recovery Strategy Implementation**
+**Objective**: Implement different recovery strategies for various reset types.
+
+**Steps**:
+1. Implement cold, warm, and hot start recovery strategies
+2. Test recovery behavior after different reset sources
+3. Validate system state after recovery
+4. Measure recovery time for each strategy
+
+**Expected Outcome**: Understanding of reset recovery mechanisms and state management.
 
 ---
 
-## ✅ **Best Practices**
+## ✅ **Check Yourself**
 
-### **1. Reset Design Principles**
+### **Basic Understanding**
+- What are the main types of reset in embedded systems?
+- How do you detect the source of a reset?
+- What is the difference between warm and cold reset?
 
-- **Always detect reset source** - Know why the system reset
-- **Implement proper initialization sequence** - Ensure reliable startup
-- **Handle all reset scenarios** - Don't ignore any reset sources
-- **Log reset events** - Track system behavior over time
-- **Implement recovery mechanisms** - Handle reset scenarios gracefully
+### **Practical Application**
+- How would you implement reset source logging?
+- What timing considerations are important for reset management?
+- How do you choose the appropriate recovery strategy?
 
-### **2. Reset Configuration**
-
-```c
-// Best practice reset configuration
-void configure_reset_best_practices(void) {
-    // Enable all reset sources
-    enable_all_reset_sources();
-    
-    // Configure appropriate timeouts
-    configure_reset_timeouts();
-    
-    // Set up reset logging
-    setup_reset_logging();
-    
-    // Configure recovery mechanisms
-    configure_recovery_mechanisms();
-}
-```
+### **Advanced Concepts**
+- How do you handle reset management in multi-core systems?
+- What are the trade-offs between different recovery strategies?
+- How do you implement reset management for safety-critical systems?
 
 ---
 
-## ⚠️ **Common Pitfalls**
-
-### **1. Reset-Related Issues**
-
-- **Not clearing reset flags** - Can cause confusion about reset source
-- **Incomplete initialization** - System may not start properly
-- **Ignoring reset sources** - Missing important system information
-- **No recovery mechanism** - System may get stuck after reset
-- **Incorrect timing** - Reset may occur too early or late
-
-### **2. Debugging Reset Issues**
-
-```c
-// Debug reset issues
-void debug_reset_issues(void) {
-    reset_flags_t flags = detect_reset_flags();
-    
-    if (flags.wdt_flag) {
-        // Check watchdog configuration
-        check_watchdog_config();
-    }
-    
-    if (flags.bod_flag) {
-        // Check power supply
-        check_power_supply();
-    }
-    
-    if (flags.software_flag) {
-        // Check software reset logic
-        check_software_reset_logic();
-    }
-}
-```
-
----
-
-## 💡 **Examples**
-
-### **1. Complete Reset Management System**
-
-```c
-// Reset management system
-typedef struct {
-    reset_timing_config_t timing;
-    reset_behavior_config_t behavior;
-    reset_flags_t flags;
-    uint32_t reset_count;
-} reset_management_system_t;
-
-// Initialize reset management
-void init_reset_management(reset_management_system_t *rms) {
-    // Configure timing
-    configure_reset_timing(&rms->timing);
-    
-    // Configure behavior
-    configure_reset_behavior(&rms->behavior);
-    
-    // Detect reset flags
-    rms->flags = detect_reset_flags();
-    
-    // Log reset event
-    log_reset_event(detect_reset_source());
-    
-    // Perform post-reset initialization
-    post_reset_init();
-}
-```
-
-### **2. Reset Monitoring System**
-
-```c
-// Reset monitoring system
-void reset_monitoring_task(void) {
-    static uint32_t last_reset_count = 0;
-    uint32_t current_reset_count = get_reset_count();
-    
-    if (current_reset_count != last_reset_count) {
-        // Reset count changed, log event
-        log_reset_event(detect_reset_source());
-        last_reset_count = current_reset_count;
-    }
-    
-    // Check for excessive resets
-    if (current_reset_count > MAX_RESET_COUNT) {
-        // Too many resets, take action
-        handle_excessive_resets();
-    }
-}
-```
-
----
-
-## 🎯 **Interview Questions**
-
-### **Basic Questions**
-1. **What are the different types of reset in embedded systems?**
-   - Power-on reset, watchdog reset, software reset, external reset
-
-2. **How do you detect the source of a reset?**
-   - Check reset flags in RCC->CSR register
-
-3. **What is the difference between warm reset and cold reset?**
-   - Warm reset preserves some state, cold reset is full initialization
-
-### **Intermediate Questions**
-4. **How would you implement a reset recovery mechanism?**
-   - Detect reset source, check system health, perform appropriate recovery
-
-5. **What are the considerations for reset timing?**
-   - Power stabilization, debouncing, initialization sequence
-
-6. **How do you handle watchdog resets?**
-   - Check system health, perform recovery if needed, reset watchdog
-
-### **Advanced Questions**
-7. **How would you design a robust reset management system?**
-   - Multiple reset sources, proper logging, recovery mechanisms
-
-8. **What are the challenges in reset management for multi-core systems?**
-   - Core synchronization, shared resource management
-
-9. **How do you implement reset in a real-time system?**
-   - Minimal latency, predictable timing, proper state management
-
----
-
-## 🔗 **Related Topics**
+## 🔗 **Cross-links**
 
 - **[Interrupts and Exceptions](./Interrupts_Exceptions.md)** - Interrupt handling and exception management
 - **[Watchdog Timers](./Watchdog_Timers.md)** - System monitoring and recovery
@@ -627,7 +278,26 @@ void reset_monitoring_task(void) {
 
 ---
 
-## 📚 **Resources**
+## 🎯 **Practical Considerations**
+
+### **System-Level Design Decisions**
+- **Reset Strategy**: Choose between immediate reset and graceful shutdown
+- **State Preservation**: Determine what information to preserve across resets
+- **Recovery Complexity**: Balance recovery robustness with startup speed
+
+### **Hardware and Power Considerations**
+- **Power Supply Stability**: Ensure adequate power-up time and brownout protection
+- **Reset Pin Design**: Proper debouncing and noise immunity
+- **Clock Management**: Proper oscillator startup and settling time
+
+### **Software and Debugging**
+- **Reset Logging**: Implement comprehensive reset event logging
+- **Recovery Validation**: Verify system state after recovery
+- **Performance Monitoring**: Track reset frequency and recovery time
+
+---
+
+## 📚 **Additional Resources**
 
 ### **Documentation**
 - [ARM Cortex-M Reset and Clock Control](https://developer.arm.com/documentation/dui0552/a/cortex-m3-peripherals/system-control-block/reset-control)
@@ -640,3 +310,7 @@ void reset_monitoring_task(void) {
 ### **Online Resources**
 - [Embedded.com - Reset Management](https://www.embedded.com/)
 - [ARM Developer - Reset and Initialization](https://developer.arm.com/)
+
+---
+
+**Next Topic:** [Timer/Counter Programming](./Timer_Counter_Programming.md) → [Watchdog Timers](./Watchdog_Timers.md)
